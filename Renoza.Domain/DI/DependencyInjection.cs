@@ -1,11 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Renoza.Domain.Extensions;
 using Renoza.Domain.Mappings;
+using Renoza.Domain.Options;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Implementations.RenozaImplementations;
 using Renoza.Domain.Services.Interfaces.BaseInterfaces;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
+using Renoza.Domain.Validators;
 using Renoza.Infrastructure.Contexts;
 using Renoza.Infrastructure.Entities.Renoza;
 using Renoza.Infrastructure.Repositories.Implementations.BaseImplementations;
@@ -29,8 +32,12 @@ namespace Renoza.Domain.DI
             IConfiguration configuration)
         {
             // Регистрируем конфигурационные опции как Singleton
-            //services.Configure<CalculationBrokerOptions>(configuration.GetSection("CalculationBrokerOptions"));
-            //services.AddSingleton(sp => sp.GetRequiredService<IOptions<CalculationBrokerOptions>>().Value);
+            var jwtSettings = configuration.GetRequiredConfigurationSection<JwtSettings>("JwtSettings");
+            services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            services.AddSingleton(jwtSettings);
+            var passwordPolicyOptions = configuration.GetRequiredConfigurationSection<PasswordPolicyOptions>("PasswordPolicy");
+            services.Configure<PasswordPolicyOptions>(configuration.GetSection("PasswordPolicy"));
+            services.AddSingleton(passwordPolicyOptions);
 
             // Регистрируем RenozaContext как Scoped
             // MassTransit автоматически создаёт scope для каждого Consumer,
@@ -64,10 +71,20 @@ namespace Renoza.Domain.DI
             });
 
             // Регистрируем репозитории как Scoped
-            services.AddScoped<IEntityWithIdRepository<UserDao, int>>(serviceProvider =>
+            services.AddScoped<IEntityWithIdRepository<UserDao, Guid>>(serviceProvider =>
             {
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
-                return new EntityWithIdRepository<UserDao, int>(context);
+                return new EntityWithIdRepository<UserDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<UserPasswordDao, long>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<UserPasswordDao, long>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<UserPasswordHistoryDao, long>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<UserPasswordHistoryDao, long>(context);
             });
 
             // Регистрируем AutoMapper
@@ -79,6 +96,11 @@ namespace Renoza.Domain.DI
 
             // Регистрируем сервисы
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IPasswordService, PasswordService>();
+            services.AddScoped<IJwtService, JwtService>();
+
+            // Регистрируем валидаторы
+            services.AddSingleton<PasswordValidator>();
 
             return services;
         }

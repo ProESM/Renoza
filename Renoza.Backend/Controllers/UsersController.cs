@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Renoza.Backend.Attributes;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
 
@@ -9,6 +10,7 @@ namespace Renoza.Backend.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         #region Логгер

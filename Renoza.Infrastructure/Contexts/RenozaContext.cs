@@ -14,8 +14,16 @@ namespace Renoza.Infrastructure.Contexts
         /// <summary>
         /// Пользователи
         /// </summary>
-        public DbSet<UserDao> Products { get; set; }
-        
+        public DbSet<UserDao> Users { get; set; }
+        /// <summary>
+        /// Пароли пользователей
+        /// </summary>
+        public DbSet<UserPasswordDao> UserPasswords { get; set; }
+        /// <summary>
+        /// История паролей пользователей
+        /// </summary>
+        public DbSet<UserPasswordHistoryDao> UserPasswordHistory { get; set; }
+
         #endregion
 
         /// <summary>
@@ -34,7 +42,9 @@ namespace Renoza.Infrastructure.Contexts
         {
             #region Указываем связанные с сущностями таблицы в БД
 
-            modelBuilder.Entity<UserDao>().ToTable("User", "auth");
+            modelBuilder.Entity<UserDao>().ToTable("Users", "auth");
+            modelBuilder.Entity<UserPasswordDao>().ToTable("UserPasswords", "auth");
+            modelBuilder.Entity<UserPasswordHistoryDao>().ToTable("UserPasswordHistory", "auth");
 
             #endregion
 
@@ -47,7 +57,32 @@ namespace Renoza.Infrastructure.Contexts
 
             modelBuilder.Entity<UserDao>()
                 .Property(x => x.Id)
-                .ValueGeneratedOnAdd(); // Configures 'Id' to be auto-generated on add
+                //.ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
+                ;
+
+            #endregion
+
+            #region UserPasswordDao
+
+            modelBuilder.Entity<UserPasswordDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<UserPasswordDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
+                ;
+
+            #endregion
+
+            #region UserPasswordHistoryDao
+
+            modelBuilder.Entity<UserPasswordHistoryDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<UserPasswordHistoryDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
+                ;
 
             #endregion
 
@@ -55,13 +90,23 @@ namespace Renoza.Infrastructure.Contexts
 
             #region Указываем внешние ключи
 
-            #region CalculationJobDao
+            #region UserPasswordDao
 
-            //modelBuilder.Entity<CalculationJobDao>()
-            //    .HasOne(x => x.CalculationStatus)
-            //    .WithMany(x => x.CalculationJobs)
-            //    .HasForeignKey(x => x.CalculationStatusId)
-            //    .IsRequired();
+            modelBuilder.Entity<UserPasswordDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.UserPasswords)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            #endregion
+
+            #region UserPasswordHistoryDao
+
+            modelBuilder.Entity<UserPasswordHistoryDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.UserPasswordHistory)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
 
             #endregion
 

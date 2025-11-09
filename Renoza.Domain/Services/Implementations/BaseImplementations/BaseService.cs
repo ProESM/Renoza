@@ -7,18 +7,18 @@ namespace Renoza.Domain.Services.Implementations.BaseImplementations
     /// <summary>
     /// Абстрактный базовый UnitOfWork-сервис
     /// </summary>
-    public abstract class BaseService : IBaseService, IAsyncDisposable
+    public abstract class BaseService<T> : IBaseService<T>, IAsyncDisposable where T : BaseDbContext
     {
-        private readonly BaseDbContext _context;
+        protected readonly T Context;
         private IDbContextTransaction? _transaction;
 
         /// <summary>
         /// Конструктор Unit of Work
         /// </summary>
         /// <param name="context">Контекст БД</param>
-        protected BaseService(BaseDbContext context)
+        protected BaseService(T context)
         {
-            _context = context;
+            Context = context;
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Renoza.Domain.Services.Implementations.BaseImplementations
         /// </summary>
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            return await Context.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Renoza.Domain.Services.Implementations.BaseImplementations
                 throw new InvalidOperationException("Транзакция уже начата");
             }
 
-            _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            _transaction = await Context.Database.BeginTransactionAsync(cancellationToken);
         }
 
         /// <summary>

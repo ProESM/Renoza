@@ -1,9 +1,11 @@
-﻿namespace Renoza.Domain.Services.Interfaces.BaseInterfaces
+﻿using Renoza.Infrastructure.Contexts;
+
+namespace Renoza.Domain.Services.Interfaces.BaseInterfaces
 {
     /// <summary>
     /// Интерфейс Unit of Work для управления транзакциями
     /// </summary>
-    public interface IUnitOfWorkService : IBaseService
+    public interface IUnitOfWorkService : IBaseService<RenozaContext>
     {
     }
 }

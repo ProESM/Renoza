@@ -1,9 +1,11 @@
-﻿namespace Renoza.Domain.Services.Interfaces.BaseInterfaces
+﻿using Renoza.Infrastructure.Contexts;
+
+namespace Renoza.Domain.Services.Interfaces.BaseInterfaces
 {
     /// <summary>
     /// Интерфейс базового UnitOfWork-сервиса
     /// </summary>
-    public interface IBaseService : IDisposable
+    public interface IBaseService<T> : IDisposable where T : BaseDbContext
     {
         /// <summary>
         /// Сохранить все изменения в БД

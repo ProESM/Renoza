@@ -11,23 +11,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// <summary>
     /// Сервис работы с пользователями
     /// </summary>
-    public class UserService : BaseService, IUserService
+    public class UserService : BaseService<RenozaContext>, IUserService
     {
-        #region Контексты
-
-        /// <summary>
-        /// Контекст БД
-        /// </summary>
-        private readonly RenozaContext _dbContext;
-
-        #endregion
-
         #region Репозитории
 
         /// <summary>
         /// Репозиторий пользователей
         /// </summary>
-        private readonly IEntityWithIdRepository<UserDao, int> _userRepository;
+        private readonly IEntityWithIdRepository<UserDao, Guid> _userRepository;
 
         #endregion
 
@@ -48,10 +39,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public UserService(
             RenozaContext dbContext,
-            IEntityWithIdRepository<UserDao, int> userRepository,
+            IEntityWithIdRepository<UserDao, Guid> userRepository,
             IMapper mapper) : base(dbContext)
         {
-            _dbContext = dbContext;
             _userRepository = userRepository;
             _mapper = mapper;
         }

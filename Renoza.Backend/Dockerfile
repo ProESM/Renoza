@@ -6,6 +6,7 @@ USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
+ENV TZ=Europe/Moscow # Нужно будет убрать в финальной сборке
 
 
 # This stage is used to build the service project
@@ -26,5 +27,13 @@ RUN dotnet publish "./Renoza.Backend.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
+
+# Нужно будет убрать в финальной сборке
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apt-get clean
+
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Renoza.Backend.dll"]

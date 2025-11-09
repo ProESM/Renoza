@@ -1,12 +1,13 @@
 ﻿using Renoza.Domain.Entities.Users;
 using Renoza.Domain.Services.Interfaces.BaseInterfaces;
+using Renoza.Infrastructure.Contexts;
 
 namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
 {
     /// <summary>
     /// Интерфейс сервиса работы с пользователями
     /// </summary>
-    public interface IUserService : IBaseService
+    public interface IUserService : IBaseService<RenozaContext>
     {
         /// <summary>
         /// Возвращает интерфейс для запроса пользователей

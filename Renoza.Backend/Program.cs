@@ -1,5 +1,6 @@
 using Renoza.Backend.Helpers;
 using Renoza.Domain.DI;
+using Renoza.Backend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,13 +16,18 @@ using (var scope = serviceProvider.CreateScope())
     MigrationHelper.UpdateDatabase(scope.ServiceProvider);
 }
 
-// Регистрируем зависимости Domain слоя (DbContext, UnitOfWork, репозитории, AutoMapper, сервисы, конфигурационные опции)
+// Р РµРіРёСЃС‚СЂРёСЂСѓРµРј Р·Р°РІРёСЃРёРјРѕСЃС‚Рё Domain СЃР»РѕСЏ (DbContext, UnitOfWork, СЂРµРїРѕР·РёС‚РѕСЂРёРё, AutoMapper, СЃРµСЂРІРёСЃС‹, РєРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Рµ РѕРїС†РёРё)
 builder.Services.AddDomainServices(builder.Configuration);
+// РќР°СЃС‚СЂР°РёРІР°РµРј Jwt Bearer Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ
+builder.Services.AddJwtBearerAuthentication(builder.Configuration);
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// РќР°СЃС‚СЂР°РёРІР°РµРј Swagger
+builder.Services.AddSwaggerGenerator();
 
 var app = builder.Build();
 
@@ -34,6 +40,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
