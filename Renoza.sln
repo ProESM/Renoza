@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.Backend", "Renoza.Backend\Renoza.Backend.csproj", "{A688A381-6680-4EBF-B7EF-A4517C55E832}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.Common.Base", "Renoza.Common.Base\Renoza.Common.Base.csproj", "{6C805570-639E-41E9-A123-F1E2E1D49D5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.Infrastructure", "Renoza.Infrastructure\Renoza.Infrastructure.csproj", "{4CF985E8-40FB-4AC2-B8E9-E08F2D4A3459}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.Domain", "Renoza.Domain\Renoza.Domain.csproj", "{BFBE09D1-77D7-4842-B675-57704799B067}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.DbMigration", "Renoza.DbMigration\Renoza.DbMigration.csproj", "{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A688A381-6680-4EBF-B7EF-A4517C55E832}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A688A381-6680-4EBF-B7EF-A4517C55E832}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A688A381-6680-4EBF-B7EF-A4517C55E832}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A688A381-6680-4EBF-B7EF-A4517C55E832}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C805570-639E-41E9-A123-F1E2E1D49D5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C805570-639E-41E9-A123-F1E2E1D49D5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C805570-639E-41E9-A123-F1E2E1D49D5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C805570-639E-41E9-A123-F1E2E1D49D5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CF985E8-40FB-4AC2-B8E9-E08F2D4A3459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CF985E8-40FB-4AC2-B8E9-E08F2D4A3459}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CF985E8-40FB-4AC2-B8E9-E08F2D4A3459}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CF985E8-40FB-4AC2-B8E9-E08F2D4A3459}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFBE09D1-77D7-4842-B675-57704799B067}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFBE09D1-77D7-4842-B675-57704799B067}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFBE09D1-77D7-4842-B675-57704799B067}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFBE09D1-77D7-4842-B675-57704799B067}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84B3D667-2B1B-478D-8E6E-082AE8BF6B4E}
+	EndGlobalSection
+EndGlobal

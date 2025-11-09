@@ -1,0 +1,6 @@
+@Renoza.Backend_HostAddress = http://localhost:5187
+
+GET {{Renoza.Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
