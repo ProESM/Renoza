@@ -81,13 +81,13 @@ namespace Renoza.Domain.Entities.Users
         [Display(Name = "Дата и время создания")]
         [DataMember]
         [JsonProperty(PropertyName = "CreatedAt")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// Дата и время редактирования
         /// </summary>
         [Display(Name = "Дата и время редактирования")]
         [DataMember]
         [JsonProperty(PropertyName = "UpdatedAt")]
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

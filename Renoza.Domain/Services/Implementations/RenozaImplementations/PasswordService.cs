@@ -77,6 +77,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 .Where(p => p.UserId == userId && p.IsActive)
                 .ToListAsync(cancellationToken);
 
+            var now = DateTime.UtcNow;
             foreach (var userPasswordDao in userPasswordDaos)
             {
                 userPasswordDao.IsActive = false;
@@ -87,8 +88,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                     UserId = userId,
                     PasswordHash = userPasswordDao.PasswordHash,
                     UsedFromAt = userPasswordDao.CreatedAt,
-                    UsedToAt = DateTime.Now,
-                    CreatedAt = DateTime.Now
+                    UsedToAt = now,
+                    CreatedAt = now
                 };
                 await _userPasswordHistoryRepository.CreateAsync(userPasswordHistoryDao, cancellationToken);
             }
@@ -100,8 +101,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 PasswordHash = hash,
                 PasswordSalt = salt,
                 IsActive = true,
-                CreatedAt = DateTime.Now,
-                ExpiredAt = DateTime.Now.AddDays(_passwordPolicyOptions.ExpiryDays)
+                CreatedAt = now,
+                ExpiredAt = now.AddDays(_passwordPolicyOptions.ExpiryDays)
             };
 
             await _userPasswordRepository.CreateAsync(newUserPasswordDao, cancellationToken);
@@ -132,7 +133,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             if (activeUserPasswordDao == null) return false;
 
             // Проверяем срок действия пароля
-            if (activeUserPasswordDao.ExpiredAt.HasValue && activeUserPasswordDao.ExpiredAt < DateTime.Now)
+            if (activeUserPasswordDao.ExpiredAt.HasValue && activeUserPasswordDao.ExpiredAt < DateTime.UtcNow)
             {
                 return false;
             }
@@ -158,7 +159,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             var activeUserPasswordDao = await _userPasswordRepository.GetQueryable()
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.IsActive, cancellationToken);
 
-            return activeUserPasswordDao?.ExpiredAt < DateTime.Now;
+            return activeUserPasswordDao?.ExpiredAt < DateTime.UtcNow;
         }
 
         private async Task CleanupPasswordHistory(Guid userId, CancellationToken cancellationToken = default)

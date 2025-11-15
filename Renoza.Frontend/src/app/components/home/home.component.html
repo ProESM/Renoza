@@ -1,0 +1,97 @@
+<div class="home-container">
+  <mat-toolbar color="primary" class="header">
+    <span class="app-name">Renoza</span>
+    <span class="spacer"></span>
+    @if (currentUser) {
+      <span class="user-info">
+        <mat-icon>person</mat-icon>
+        {{ currentUser.displayName || currentUser.name }}
+      </span>
+    }
+    <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-button">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span>Выйти</span>
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <div class="content">
+    <mat-card class="welcome-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="welcome-icon">waving_hand</mat-icon>
+        <mat-card-title>Добро пожаловать!</mat-card-title>
+        @if (currentUser) {
+          <mat-card-subtitle>
+            {{ currentUser.displayName || currentUser.name }}
+          </mat-card-subtitle>
+        }
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="welcome-message">
+          <h2>Добро пожаловать в Renoza</h2>
+          <p>
+            Вы успешно вошли в систему. Это защищенная страница, доступная только авторизованным пользователям.
+          </p>
+
+          <mat-divider></mat-divider>
+
+          @if (currentUser) {
+            <div class="user-details">
+              <h3>Информация о профиле</h3>
+              <div class="detail-row">
+                <mat-icon>badge</mat-icon>
+                <div class="detail-content">
+                  <span class="detail-label">Имя пользователя:</span>
+                  <span class="detail-value">{{ currentUser.name }}</span>
+                </div>
+              </div>
+
+              @if (currentUser.email) {
+                <div class="detail-row">
+                  <mat-icon>email</mat-icon>
+                  <div class="detail-content">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ currentUser.email }}</span>
+                  </div>
+                </div>
+              }
+
+              <div class="detail-row">
+                <mat-icon>access_time</mat-icon>
+                <div class="detail-content">
+                  <span class="detail-label">Дата создания:</span>
+                  <span class="detail-value">{{ currentUser.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon>verified_user</mat-icon>
+                <div class="detail-content">
+                  <span class="detail-label">Статус:</span>
+                  <span class="detail-value" [class.active]="currentUser.isActive">
+                    {{ currentUser.isActive ? 'Активен' : 'Неактивен' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <mat-divider></mat-divider>
+
+          <div class="actions-section">
+            <h3>Доступные действия</h3>
+            <p class="info-text">
+              <mat-icon>info</mat-icon>
+              В будущем здесь появятся доступные функции приложения
+            </p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

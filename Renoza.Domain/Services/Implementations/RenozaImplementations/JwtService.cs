@@ -27,7 +27,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
-            var expiresAt = DateTime.Now.AddMinutes(_jwtSettings.ExpirationMinutes ?? 60);
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes ?? 60);
 
             var claims = new List<Claim>
             {

@@ -1,0 +1,81 @@
+services:
+  # PostgreSQL Database
+  # postgres:
+    # image: postgres:16-alpine
+    # container_name: renoza-postgres
+    # environment:
+      # POSTGRES_DB: ${POSTGRES_DB:-renoza}
+      # POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      # POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # TZ: Europe/Moscow
+    # ports:
+      # - "${POSTGRES_PORT:-5432}:5432"
+    # volumes:
+      # - postgres_data:/var/lib/postgresql/data
+    # networks:
+      # - renoza-network
+    # restart: unless-stopped
+    # healthcheck:
+      # test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      # interval: 10s
+      # timeout: 5s
+      # retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ..
+      dockerfile: Renoza.Backend/Dockerfile
+    container_name: renoza-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080
+      # - ConnectionStrings__Renoza=Host=postgres;Port=5432;Database=${POSTGRES_DB:-renoza};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      # Используйте внешнюю БД PostgreSQL
+      - ConnectionStrings__Renoza=Host=${POSTGRES_HOST:-postgres};Port=5432;Database=${POSTGRES_DB:-renoza};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - TZ=Europe/Moscow
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    # depends_on:
+      # postgres:
+        # condition: service_healthy
+    networks:
+      - renoza-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ../Renoza.Frontend
+      dockerfile: Dockerfile
+    container_name: renoza-frontend
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+    depends_on:
+      - backend
+    networks:
+      - renoza-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  renoza-network:
+    driver: bridge
+    name: renoza-network
+
+volumes:
+  postgres_data:
+    name: renoza-postgres-data

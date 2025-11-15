@@ -122,7 +122,8 @@ namespace Renoza.Backend.Controllers
                 return Ok(new
                 {
                     id = user.Id,
-                    name = user.Name
+                    name = user.Name,
+                    isActive = user.IsActive
                 });
             }
             catch (Exception ex)

@@ -1,0 +1,10 @@
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Backup files
+*.sql
+*.sql.gz
+*.dump

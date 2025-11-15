@@ -16,6 +16,18 @@ using (var scope = serviceProvider.CreateScope())
     MigrationHelper.UpdateDatabase(scope.ServiceProvider);
 }
 
+// Настройка CORS для Frontend приложения
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 // Регистрируем зависимости Domain слоя (DbContext, UnitOfWork, репозитории, AutoMapper, сервисы, конфигурационные опции)
 builder.Services.AddDomainServices(builder.Configuration);
 // Настраиваем Jwt Bearer аутентификацию
@@ -39,6 +51,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Включаем CORS (должен быть до Authentication и Authorization)
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

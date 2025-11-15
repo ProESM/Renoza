@@ -2,11 +2,19 @@
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
+# USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
-ENV TZ=Europe/Moscow # Íóæíî áóäåò óáðàòü â ôèíàëüíîé ñáîðêå
+# ÐÑƒÐ¶Ð½Ð¾ Ð±ÑƒÐ´ÐµÑ‚ ÑƒÐ±Ñ€Ð°Ñ‚ÑŒ Ð² Ñ„Ð¸Ð½Ð°Ð»ÑŒÐ½Ð¾Ð¹ ÑÐ±Ð¾Ñ€ÐºÐµ
+ENV TZ=Europe/Moscow
+# ÐÑƒÐ¶Ð½Ð¾ Ð±ÑƒÐ´ÐµÑ‚ ÑƒÐ±Ñ€Ð°Ñ‚ÑŒ Ð² Ñ„Ð¸Ð½Ð°Ð»ÑŒÐ½Ð¾Ð¹ ÑÐ±Ð¾Ñ€ÐºÐµ
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apt-get clean
+USER app
 
 
 # This stage is used to build the service project
@@ -14,26 +22,21 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Renoza.Backend/Renoza.Backend.csproj", "Renoza.Backend/"]
-RUN dotnet restore "./Renoza.Backend/Renoza.Backend.csproj"
+COPY ["Renoza.Domain/Renoza.Domain.csproj", "Renoza.Domain/"]
+COPY ["Renoza.DbMigration/Renoza.DbMigration.csproj", "Renoza.DbMigration/"]
+RUN dotnet restore "Renoza.Backend/Renoza.Backend.csproj"
 COPY . .
 WORKDIR "/src/Renoza.Backend"
-RUN dotnet build "./Renoza.Backend.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "Renoza.Backend.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Renoza.Backend.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Renoza.Backend.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-
-# Íóæíî áóäåò óáðàòü â ôèíàëüíîé ñáîðêå
-RUN apt-get update && \
-    apt-get install -y tzdata && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
-    apt-get clean
 
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Renoza.Backend.dll"]

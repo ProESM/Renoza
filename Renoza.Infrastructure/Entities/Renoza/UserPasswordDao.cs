@@ -30,10 +30,10 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// <summary>
         /// Дата и время создания
         /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// Дата и время срока действия
         /// </summary>
-        public DateTime? ExpiredAt { get; set; } = DateTime.Now;
+        public DateTime? ExpiredAt { get; set; } = DateTime.UtcNow;
     }
 }

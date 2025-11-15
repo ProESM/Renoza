@@ -48,11 +48,11 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// <summary>
         /// Дата и время создания
         /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// Дата и время редактирования
         /// </summary>
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<UserPasswordDao> UserPasswords { get; set; } = null!;
         public virtual ICollection<UserPasswordHistoryDao> UserPasswordHistory { get; set; } = null!;

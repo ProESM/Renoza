@@ -22,14 +22,14 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// <summary>
         /// Дата и время начала действия
         /// </summary>
-        public DateTime UsedFromAt { get; set; } = DateTime.Now;
+        public DateTime UsedFromAt { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// Дата и время окончания действия
         /// </summary>
-        public DateTime? UsedToAt { get; set; } = DateTime.Now;
+        public DateTime? UsedToAt { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// Дата и время создания
         /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
