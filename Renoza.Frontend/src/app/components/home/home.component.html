@@ -83,6 +83,48 @@
 
           <mat-divider></mat-divider>
 
+          <!-- Роли и профили -->
+          <div class="roles-section">
+            <h3>Управление ролями и профилями</h3>
+
+            @if (userRoles.length > 0) {
+              <div class="current-roles">
+                <p>Ваши текущие роли:</p>
+                <mat-chip-set>
+                  @for (role of userRoles; track role.id) {
+                    <mat-chip>
+                      <mat-icon>{{ getRoleIcon(role.id) }}</mat-icon>
+                      {{ role.name }}
+                    </mat-chip>
+                  }
+                </mat-chip-set>
+              </div>
+            }
+
+            <div class="profile-links">
+              <button mat-raised-button color="primary" routerLink="/profile/roles">
+                <mat-icon>admin_panel_settings</mat-icon>
+                Управление ролями
+              </button>
+
+              @if (hasWorkerRole()) {
+                <button mat-raised-button color="accent" routerLink="/profile/worker">
+                  <mat-icon>engineering</mat-icon>
+                  Профиль работника
+                </button>
+              }
+
+              @if (hasCustomerRole()) {
+                <button mat-raised-button color="primary" routerLink="/profile/customer">
+                  <mat-icon>business</mat-icon>
+                  Профиль заказчика
+                </button>
+              }
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
           <div class="actions-section">
             <h3>Доступные действия</h3>
             <p class="info-text">

@@ -2,38 +2,36 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: 16px;
+  overflow: hidden;
 }
 
 .login-card {
-  max-width: 400px;
+  max-width: 450px;
   width: 100%;
-  padding: 20px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 mat-card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 30px;
+  text-align: center;
+  margin-bottom: 16px;
+}
 
-  mat-card-title {
-    font-size: 28px;
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
+mat-card-title {
+  font-size: 24px;
+  font-weight: 500;
+}
 
-  mat-card-subtitle {
-    font-size: 16px;
-    color: rgba(0, 0, 0, 0.6);
-  }
+mat-card-subtitle {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .full-width {
   width: 100%;
-  margin-bottom: 16px;
 }
 
 .error-message {
@@ -41,27 +39,24 @@ mat-card-header {
   align-items: center;
   gap: 8px;
   color: #f44336;
-  margin-bottom: 16px;
-  padding: 12px;
+  margin: 8px 0;
+  padding: 8px;
   background-color: #ffebee;
   border-radius: 4px;
+  font-size: 14px;
 
   mat-icon {
     font-size: 20px;
     height: 20px;
     width: 20px;
   }
-
-  span {
-    font-size: 14px;
-  }
 }
 
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .login-button {
@@ -80,9 +75,98 @@ mat-card-header {
   color: #667eea;
 }
 
-// 40?B82=>ABL
+.login-form {
+  padding: 16px 0;
+}
+
+.phone-input-row {
+  display: flex;
+  gap: 12px;
+
+  .country-code-field {
+    flex: 0 0 140px;
+  }
+
+  .phone-number-field {
+    flex: 1;
+  }
+}
+
+.phone-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.phone-input {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  color: transparent !important;
+  caret-color: #667eea;
+
+  // Скрываем текст полностью
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+
+  // Скрываем placeholder
+  &::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
+
+  &::-webkit-input-placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
+
+  &::-moz-placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
+
+  &:-ms-input-placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
+}
+
+.phone-format-overlay {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  font-family: 'Roboto', monospace;
+  letter-spacing: 0.5px;
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: 0;
+  white-space: nowrap;
+  overflow: hidden;
+
+  ::ng-deep .entered-digit {
+    color: rgba(0, 0, 0, 0.87);
+    font-weight: 500;
+  }
+
+  ::ng-deep .placeholder-digit {
+    color: rgba(0, 0, 0, 0.38);
+    font-weight: 400;
+  }
+}
+
 @media (max-width: 600px) {
   .login-card {
     max-width: 100%;
+  }
+
+  .phone-input-row {
+    .country-code-field {
+      flex: 0 0 120px;
+    }
   }
 }

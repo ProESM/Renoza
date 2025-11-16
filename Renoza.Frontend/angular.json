@@ -58,24 +58,24 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
-              "sourceMap": true,
-              "namedChunks": true
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "Renoza.Frontend:build:development"
+          },
           "configurations": {
             "production": {
-              "browserTarget": "Renoza.Frontend:build:production"
+              "buildTarget": "Renoza.Frontend:build:production"
             },
             "development": {
-              "browserTarget": "Renoza.Frontend:build:development"
+              "buildTarget": "Renoza.Frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

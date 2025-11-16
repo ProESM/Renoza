@@ -116,6 +116,36 @@
   }
 }
 
+.roles-section {
+  margin: 24px 0;
+
+  .current-roles {
+    margin-bottom: 1.5rem;
+
+    p {
+      margin-bottom: 0.5rem;
+    }
+
+    mat-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .profile-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
 .actions-section {
   margin-top: 24px;
 

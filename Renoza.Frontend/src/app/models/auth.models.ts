@@ -1,6 +1,7 @@
 export interface LoginRequest {
   username: string;
   password: string;
+  loginType?: 'username' | 'email' | 'phone';
 }
 
 export interface AuthResponse {

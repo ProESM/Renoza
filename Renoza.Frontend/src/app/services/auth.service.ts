@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { LoginRequest, AuthResponse, User, ResetPasswordRequest } from '../models/auth.models';
+import { Role } from '../models/role.models';
 
 @Injectable({
   providedIn: 'root'
@@ -11,12 +12,16 @@ import { LoginRequest, AuthResponse, User, ResetPasswordRequest } from '../model
 export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
+  private readonly ROLES_KEY = 'user_roles';
 
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser$: Observable<User | null>;
 
   private isAuthenticatedSubject: BehaviorSubject<boolean>;
   public isAuthenticated$: Observable<boolean>;
+
+  private userRolesSubject: BehaviorSubject<Role[]>;
+  public userRoles$: Observable<Role[]>;
 
   constructor(
     private http: HttpClient,
@@ -25,6 +30,10 @@ export class AuthService {
     const storedUser = this.getUserFromStorage();
     this.currentUserSubject = new BehaviorSubject<User | null>(storedUser);
     this.currentUser$ = this.currentUserSubject.asObservable();
+
+    const storedRoles = this.getRolesFromStorage();
+    this.userRolesSubject = new BehaviorSubject<Role[]>(storedRoles);
+    this.userRoles$ = this.userRolesSubject.asObservable();
 
     this.isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasValidToken());
     this.isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -48,7 +57,9 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.ROLES_KEY);
     this.currentUserSubject.next(null);
+    this.userRolesSubject.next([]);
     this.isAuthenticatedSubject.next(false);
     this.router.navigate(['/auth/login']);
   }
@@ -146,5 +157,77 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  /**
+   * Загрузка ролей пользователя
+   */
+  loadUserRoles(): Observable<Role[]> {
+    const user = this.currentUserValue;
+    if (!user) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    return this.http.get<Role[]>(`${environment.apiUrl}/roles/user/${user.id}`)
+      .pipe(
+        tap(roles => {
+          this.setRoles(roles);
+        })
+      );
+  }
+
+  /**
+   * Сохранение ролей
+   */
+  setRoles(roles: Role[]): void {
+    localStorage.setItem(this.ROLES_KEY, JSON.stringify(roles));
+    this.userRolesSubject.next(roles);
+  }
+
+  /**
+   * Получение ролей из хранилища
+   */
+  private getRolesFromStorage(): Role[] {
+    const rolesJson = localStorage.getItem(this.ROLES_KEY);
+    if (rolesJson) {
+      try {
+        return JSON.parse(rolesJson);
+      } catch (error) {
+        console.error('Ошибка при разборе ролей пользователя:', error);
+        return [];
+      }
+    }
+    return [];
+  }
+
+  /**
+   * Получение значения ролей пользователя
+   */
+  get userRolesValue(): Role[] {
+    return this.userRolesSubject.value;
+  }
+
+  /**
+   * Проверка наличия роли у пользователя
+   */
+  hasRole(roleId: string): boolean {
+    return this.userRolesValue.some(role => role.id === roleId && role.isActive);
+  }
+
+  /**
+   * Проверка наличия любой из указанных ролей
+   */
+  hasAnyRole(roleIds: string[]): boolean {
+    return roleIds.some(roleId => this.hasRole(roleId));
+  }
+
+  /**
+   * Проверка наличия всех указанных ролей
+   */
+  hasAllRoles(roleIds: string[]): boolean {
+    return roleIds.every(roleId => this.hasRole(roleId));
   }
 }

@@ -55,7 +55,7 @@ namespace Renoza.Domain.Entities.Users
         [JsonProperty(PropertyName = "PhoneNumber")]
         public string PhoneNumber { get; set; } = string.Empty;
         /// <summary>
-        /// Международный телефонный код (без плюса)
+        /// Международный телефонный код
         /// </summary>
         [Display(Name = "Международный телефонный код")]
         [DataMember]

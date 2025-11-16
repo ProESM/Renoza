@@ -86,6 +86,31 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<UserPasswordHistoryDao, long>(context);
             });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<PhoneCountryCodeDao, int>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<PhoneCountryCodeDao, int>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<RoleDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<RoleDao, Guid>(context);
+            });
+            services.AddScoped<IEntityRepository<UserRoleDao>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityRepository<UserRoleDao>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CustomerProfileDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CustomerProfileDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<WorkerProfileDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<WorkerProfileDao, Guid>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -98,6 +123,10 @@ namespace Renoza.Domain.DI
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IPhoneCountryCodeService, PhoneCountryCodeService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<ICustomerProfileService, CustomerProfileService>();
+            services.AddScoped<IWorkerProfileService, WorkerProfileService>();
 
             // Регистрируем валидаторы
             services.AddSingleton<PasswordValidator>();

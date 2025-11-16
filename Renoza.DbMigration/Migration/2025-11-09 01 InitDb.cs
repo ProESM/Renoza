@@ -34,7 +34,7 @@ namespace Renoza.DbMigration.Migration
                     .WithColumn("Email").AsString(256).NotNullable().Unique()
                     .WithColumn("IsEmailVerified").AsBoolean().NotNullable().WithDefaultValue(false)
                     .WithColumn("PhoneNumber").AsString(50).NotNullable().Unique()
-                    .WithColumn("PhoneCountryCode").AsString(5).NotNullable()
+                    .WithColumn("PhoneCountryCode").AsString(6).NotNullable()
                     .WithColumn("IsPhoneNumberVerified").AsBoolean().NotNullable().WithDefaultValue(false)
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(false)
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
@@ -97,27 +97,38 @@ namespace Renoza.DbMigration.Migration
 
             #region Таблицы
 
-            if (!Schema.Schema("public").Table("AttributeType").Exists())
+            if (!Schema.Schema("public").Table("Countries").Exists())
             {
-                Create.Table("AttributeType")
+                Create.Table("Countries")
                     .InSchema("public")
-                    .WithColumn("Id").AsInt16().PrimaryKey().Identity()
-                    .WithColumn("ExtId").AsString(128).NotNullable().Unique()
+                    .WithColumn("Id").AsInt32().PrimaryKey().Identity()
                     .WithColumn("Name").AsString(256).NotNullable()
-                    .WithColumn("Code").AsString(128).NotNullable().Unique()
-                    .WithColumn("Description").AsString().Nullable()
-                    .WithColumn("EditedBy").AsString(50).Nullable()
-                    .WithColumn("EditedDate").AsDateTime().Nullable()
-                    .WithColumn("DeletedBy").AsString(50).Nullable()
-                    .WithColumn("DeletedDate").AsDateTime().Nullable()
-                    .WithColumn("IsDeleted").AsBoolean().NotNullable().WithDefaultValue(false);
+                    .WithColumn("Code").AsString(3).NotNullable().Unique()
+                    .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(false)
+                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
+                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+            }
+            if (!Schema.Schema("public").Table("PhoneCountryCodes").Exists())
+            {
+                Create.Table("PhoneCountryCodes")
+                    .InSchema("public")
+                    .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                    .WithColumn("Code").AsString(8).NotNullable()
+                    .WithColumn("PhoneFormat").AsString(50).NotNullable()
+                    .WithColumn("CountryId").AsInt32().NotNullable().ForeignKey("FK_PhoneCountryCodes_CountryId", "public", "Countries", "Id").OnDelete(Rule.Cascade)
+                    ;
+
+                Create.Index("IDX_PhoneCountryCodes_CountryId")
+                    .OnTable("PhoneCountryCodes")
+                    .InSchema("public")
+                    .OnColumn("CountryId");
             }
 
             #endregion
 
             #region Представления
 
-            
+
 
             #endregion
 
@@ -130,9 +141,13 @@ namespace Renoza.DbMigration.Migration
         {
             #region Схема public
 
-            if (Schema.Schema("public").Table("AttributeType").Exists())
+            if (Schema.Schema("public").Table("PhoneCountryCodes").Exists())
             {
-                Delete.Table("AttributeType").InSchema("public");
+                Delete.Table("PhoneCountryCodes").InSchema("public");
+            }
+            if (Schema.Schema("public").Table("Countries").Exists())
+            {
+                Delete.Table("Countries").InSchema("public");
             }
 
             #endregion

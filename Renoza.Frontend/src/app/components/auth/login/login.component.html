@@ -6,55 +6,141 @@
     </mat-card-header>
 
     <mat-card-content>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Имя пользователя или Email</mat-label>
-          <input matInput formControlName="username" required>
-          <mat-icon matSuffix>person</mat-icon>
-          @if (f['username'].hasError('required')) {
-            <mat-error>Имя пользователя обязательно</mat-error>
-          }
-        </mat-form-field>
+      <mat-tab-group [(selectedIndex)]="selectedTabIndex" animationDuration="300ms">
+        <!-- Вход по имени пользователя -->
+        <mat-tab label="По имени пользователя">
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Имя пользователя или Email</mat-label>
+              <input matInput formControlName="username" required>
+              <mat-icon matSuffix>person</mat-icon>
+              @if (f['username'].hasError('required')) {
+                <mat-error>Имя пользователя обязательно</mat-error>
+              }
+            </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Пароль</mat-label>
-          <input matInput
-                 [type]="hidePassword ? 'password' : 'text'"
-                 formControlName="password"
-                 required>
-          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
-            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-          </button>
-          @if (f['password'].hasError('required')) {
-            <mat-error>Пароль обязателен</mat-error>
-          }
-        </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Пароль</mat-label>
+              <input matInput
+                     [type]="hidePassword ? 'password' : 'text'"
+                     formControlName="password"
+                     required>
+              <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              @if (f['password'].hasError('required')) {
+                <mat-error>Пароль обязателен</mat-error>
+              }
+            </mat-form-field>
 
-        @if (error) {
-          <div class="error-message">
-            <mat-icon>error</mat-icon>
-            <span>{{ error }}</span>
-          </div>
-        }
-
-        <div class="actions">
-          <button mat-raised-button
-                  color="primary"
-                  type="submit"
-                  [disabled]="loading || loginForm.invalid"
-                  class="login-button">
-            @if (loading) {
-              <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-              <span>Войти</span>
+            @if (error && selectedTabIndex === 0) {
+              <div class="error-message">
+                <mat-icon>error</mat-icon>
+                <span>{{ error }}</span>
+              </div>
             }
-          </button>
 
-          <a mat-button routerLink="/auth/reset-password" class="forgot-password">
-            Забыли пароль?
-          </a>
-        </div>
-      </form>
+            <div class="actions">
+              <button mat-raised-button
+                      color="primary"
+                      type="submit"
+                      [disabled]="loading || loginForm.invalid"
+                      class="login-button">
+                @if (loading && selectedTabIndex === 0) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  <span>Войти</span>
+                }
+              </button>
+
+              <a mat-button routerLink="/auth/reset-password" class="forgot-password">
+                Забыли пароль?
+              </a>
+            </div>
+          </form>
+        </mat-tab>
+
+        <!-- Вход по номеру телефона -->
+        <mat-tab label="По номеру телефона">
+          <form [formGroup]="phoneLoginForm" (ngSubmit)="onPhoneSubmit()" class="login-form">
+            <div class="phone-input-row">
+              <mat-form-field appearance="outline" class="country-code-field">
+                <mat-label>Код</mat-label>
+                <mat-select formControlName="phoneCountryCode" required>
+                  <mat-select-trigger>
+                    {{ selectedCountry?.flag }} {{ selectedCountry?.code }}
+                  </mat-select-trigger>
+                  @for (code of phoneCountryCodes; track code.id) {
+                    <mat-option [value]="code.id">
+                      {{ code.displayText }}
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (pf['phoneCountryCode'].hasError('required')) {
+                  <mat-error>Код обязателен</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="phone-number-field" floatLabel="always">
+                <mat-label>Номер телефона</mat-label>
+                <div class="phone-input-wrapper">
+                  <input matInput
+                         formControlName="phoneNumber"
+                         maxlength="15"
+                         class="phone-input"
+                         required>
+                  @if (formattedPhonePreview) {
+                    <div class="phone-format-overlay" [innerHTML]="formattedPhonePreview"></div>
+                  }
+                </div>
+                <mat-icon matSuffix>phone</mat-icon>
+                @if (pf['phoneNumber'].hasError('required')) {
+                  <mat-error>Введите номер телефона</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Пароль</mat-label>
+              <input matInput
+                     [type]="hidePhonePassword ? 'password' : 'text'"
+                     formControlName="password"
+                     required>
+              <button mat-icon-button matSuffix (click)="hidePhonePassword = !hidePhonePassword" type="button">
+                <mat-icon>{{hidePhonePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              @if (pf['password'].hasError('required')) {
+                <mat-error>Пароль обязателен</mat-error>
+              }
+            </mat-form-field>
+
+            @if (error && selectedTabIndex === 1) {
+              <div class="error-message">
+                <mat-icon>error</mat-icon>
+                <span>{{ error }}</span>
+              </div>
+            }
+
+            <div class="actions">
+              <button mat-raised-button
+                      color="primary"
+                      type="submit"
+                      [disabled]="loading || phoneLoginForm.invalid"
+                      class="login-button">
+                @if (loading && selectedTabIndex === 1) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  <span>Войти</span>
+                }
+              </button>
+
+              <a mat-button routerLink="/auth/reset-password" class="forgot-password">
+                Забыли пароль?
+              </a>
+            </div>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
     </mat-card-content>
   </mat-card>
 </div>

@@ -33,9 +33,9 @@ namespace Renoza.Infrastructure.Entities.Renoza
         [MaxLength(50)]
         public string PhoneNumber { get; set; } = string.Empty;
         /// <summary>
-        /// Международный телефонный код (без плюса)
+        /// Международный телефонный код
         /// </summary>
-        [MaxLength(5)]
+        [MaxLength(6)]
         public string PhoneCountryCode { get; set; } = string.Empty;
         /// <summary>
         /// Признак подтверждения номера телефона
@@ -54,7 +54,25 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// </summary>
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Навигационное свойство: связи с паролями
+        /// </summary>
         public virtual ICollection<UserPasswordDao> UserPasswords { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с историей паролей
+        /// </summary>
         public virtual ICollection<UserPasswordHistoryDao> UserPasswordHistory { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с ролями
+        /// </summary>
+        public virtual ICollection<UserRoleDao> UserRoles { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с профилями заказчиков
+        /// </summary>
+        public virtual ICollection<CustomerProfileDao> CustomerProfiles { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с профилями работников
+        /// </summary>
+        public virtual ICollection<WorkerProfileDao> WorkerProfiles { get; set; } = null!;
     }
 }

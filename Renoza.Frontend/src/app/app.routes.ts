@@ -27,6 +27,26 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
 
+  // Маршруты профилей
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'roles',
+        loadComponent: () => import('./components/profile/user-roles/user-roles.component').then(m => m.UserRolesComponent)
+      },
+      {
+        path: 'worker',
+        loadComponent: () => import('./components/profile/worker-profile/worker-profile.component').then(m => m.WorkerProfileComponent)
+      },
+      {
+        path: 'customer',
+        loadComponent: () => import('./components/profile/customer-profile/customer-profile.component').then(m => m.CustomerProfileComponent)
+      }
+    ]
+  },
+
   // Перенаправление на 404 или home
   { path: '**', redirectTo: '/home' }
 ];

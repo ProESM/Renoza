@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Renoza.Backend.Models.Auth;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
+using System.Text.RegularExpressions;
 
 namespace Renoza.Backend.Controllers
 {
@@ -46,9 +47,32 @@ namespace Renoza.Backend.Controllers
                     return BadRequest(ModelState);
                 }
 
-                // Поиск пользователя по имени
-                var user = await _userService.GetQueryable()
-                    .FirstOrDefaultAsync(u => u.Name == request.Username);
+                // Поиск пользователя в зависимости от типа логина
+                var username = request.Username;
+                var loginType = request.LoginType?.ToLower();
+
+                if (!string.IsNullOrWhiteSpace(username))
+                {
+                    username = username.Trim();
+                }
+
+                Domain.Entities.Users.User? user = null;
+
+                if (loginType == "phone")
+                {
+                    if (!string.IsNullOrWhiteSpace(username))
+                    {
+                        username = Regex.Replace(username, @"\D", "");
+                    }
+                    // Поиск по номеру телефона (формат: +7XXXXXXXXXX)
+                    user = await _userService.GetQueryable()
+                        .FirstOrDefaultAsync(u => (u.PhoneCountryCode + u.PhoneNumber) == username);
+                }
+                else
+                {
+                    user = await _userService.GetQueryable()
+                        .FirstOrDefaultAsync(u => u.Email == username || u.Name == username);
+                }
 
                 if (user == null)
                 {

@@ -12,6 +12,14 @@ namespace Renoza.Infrastructure.Contexts
         #region Наборы сущностей
 
         /// <summary>
+        /// Страны
+        /// </summary>
+        public DbSet<CountryDao> Countries { get; set; }
+        /// <summary>
+        /// Международные телефонные коды
+        /// </summary>
+        public DbSet<PhoneCountryCodeDao> PhoneCountryCodes { get; set; }
+        /// <summary>
         /// Пользователи
         /// </summary>
         public DbSet<UserDao> Users { get; set; }
@@ -23,6 +31,22 @@ namespace Renoza.Infrastructure.Contexts
         /// История паролей пользователей
         /// </summary>
         public DbSet<UserPasswordHistoryDao> UserPasswordHistory { get; set; }
+        /// <summary>
+        /// Роли
+        /// </summary>
+        public DbSet<RoleDao> Roles { get; set; }
+        /// <summary>
+        /// Связи пользователей и ролей
+        /// </summary>
+        public DbSet<UserRoleDao> UserRoles { get; set; }
+        /// <summary>
+        /// Профили заказчиков
+        /// </summary>
+        public DbSet<CustomerProfileDao> CustomerProfiles { get; set; }
+        /// <summary>
+        /// Профили работников
+        /// </summary>
+        public DbSet<WorkerProfileDao> WorkerProfiles { get; set; }
 
         #endregion
 
@@ -42,23 +66,42 @@ namespace Renoza.Infrastructure.Contexts
         {
             #region Указываем связанные с сущностями таблицы в БД
 
+            #region auth
+
+            modelBuilder.Entity<RoleDao>().ToTable("Roles", "auth");
             modelBuilder.Entity<UserDao>().ToTable("Users", "auth");
             modelBuilder.Entity<UserPasswordDao>().ToTable("UserPasswords", "auth");
             modelBuilder.Entity<UserPasswordHistoryDao>().ToTable("UserPasswordHistory", "auth");
+            modelBuilder.Entity<UserRoleDao>().ToTable("UserRoles", "auth");
+
+            #endregion
+
+            #region public
+
+            modelBuilder.Entity<CountryDao>().ToTable("Countries", "public");
+            modelBuilder.Entity<CustomerProfileDao>().ToTable("CustomerProfiles", "public");
+            modelBuilder.Entity<PhoneCountryCodeDao>().ToTable("PhoneCountryCodes", "public");
+            modelBuilder.Entity<WorkerProfileDao>().ToTable("WorkerProfiles", "public");
+
+            #endregion
 
             #endregion
 
             #region Указываем первичные ключи
 
+            #region auth
+
+            #region RoleDao
+
+            modelBuilder.Entity<RoleDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
             #region UserDao
 
             modelBuilder.Entity<UserDao>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<UserDao>()
-                .Property(x => x.Id)
-                //.ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
-                ;
 
             #endregion
 
@@ -86,9 +129,62 @@ namespace Renoza.Infrastructure.Contexts
 
             #endregion
 
+            #region UserRoleDao
+
+            modelBuilder.Entity<UserRoleDao>()
+                .HasKey(x => new { x.UserId, x.RoleId });
+
+            #endregion
+
+            #endregion
+
+            #region public
+
+            #region CountryDao
+
+            modelBuilder.Entity<CountryDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<CountryDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
+                ;
+
+            #endregion
+
+            #region CustomerProfileDao
+
+            modelBuilder.Entity<CustomerProfileDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region PhoneCountryCodeDao
+
+            modelBuilder.Entity<PhoneCountryCodeDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<PhoneCountryCodeDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd() // Configures 'Id' to be auto-generated on add
+                ;
+
+            #endregion
+
+            #region WorkerProfileDao
+
+            modelBuilder.Entity<WorkerProfileDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #endregion
+
             #endregion
 
             #region Указываем внешние ключи
+
+            #region auth
 
             #region UserPasswordDao
 
@@ -105,6 +201,53 @@ namespace Renoza.Infrastructure.Contexts
             modelBuilder.Entity<UserPasswordHistoryDao>()
                 .HasOne(x => x.User)
                 .WithMany(x => x.UserPasswordHistory)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            #endregion
+
+            #region UserRoleDao
+
+            modelBuilder.Entity<UserRoleDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.UserRoles)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+            modelBuilder.Entity<UserRoleDao>()
+                .HasOne(x => x.Role)
+                .WithMany(x => x.UserRoles)
+                .HasForeignKey(x => x.RoleId)
+                .IsRequired();
+
+            #endregion
+
+            #endregion
+
+            #region CustomerProfileDao
+
+            modelBuilder.Entity<CustomerProfileDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.CustomerProfiles)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            #endregion
+
+            #region PhoneCountryCodeDao
+
+            modelBuilder.Entity<PhoneCountryCodeDao>()
+                .HasOne(x => x.Country)
+                .WithMany(x => x.PhoneCountryCodes)
+                .HasForeignKey(x => x.CountryId)
+                .IsRequired();
+
+            #endregion
+
+            #region WorkerProfileDao
+
+            modelBuilder.Entity<WorkerProfileDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.WorkerProfiles)
                 .HasForeignKey(x => x.UserId)
                 .IsRequired();
 

@@ -18,5 +18,10 @@ namespace Renoza.Backend.Models.Auth
         /// </summary>
         [Required(ErrorMessage = "Пароль обязателен")]
         public string Password { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Тип логина: "username", "email", "phone"
+        /// </summary>
+        public string? LoginType { get; set; }
     }
 }
