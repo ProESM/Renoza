@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Amazon.S3;
+using Amazon.Runtime;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Renoza.Domain.Extensions;
@@ -38,6 +40,11 @@ namespace Renoza.Domain.DI
             var passwordPolicyOptions = configuration.GetRequiredConfigurationSection<PasswordPolicyOptions>("PasswordPolicy");
             services.Configure<PasswordPolicyOptions>(configuration.GetSection("PasswordPolicy"));
             services.AddSingleton(passwordPolicyOptions);
+
+            // Регистрируем S3 настройки
+            var s3Options = configuration.GetRequiredConfigurationSection<S3Options>("S3Settings");
+            services.Configure<S3Options>(configuration.GetSection("S3Settings"));
+            services.AddSingleton(s3Options);
 
             // Регистрируем RenozaContext как Scoped
             // MassTransit автоматически создаёт scope для каждого Consumer,
@@ -129,6 +136,30 @@ namespace Renoza.Domain.DI
                 config.AddMaps(typeof(UserMapperProfile).Assembly);
             });
 
+            // Регистрируем S3 клиент как Singleton
+            services.AddSingleton<IAmazonS3>(serviceProvider =>
+            {
+                var options = serviceProvider.GetRequiredService<S3Options>();
+                var config = new AmazonS3Config
+                {
+                    ForcePathStyle = options.ForcePathStyle
+                };
+
+                // Если указан ServiceUrl (для альтернативных S3-совместимых хранилищ)
+                if (!string.IsNullOrEmpty(options.ServiceUrl))
+                {
+                    config.ServiceURL = options.ServiceUrl;
+                }
+                // Если указан Region (для AWS S3)
+                else if (!string.IsNullOrEmpty(options.Region))
+                {
+                    config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(options.Region);
+                }
+
+                var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+                return new AmazonS3Client(credentials, config);
+            });
+
             // Регистрируем сервисы
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPasswordService, PasswordService>();
@@ -139,6 +170,7 @@ namespace Renoza.Domain.DI
             services.AddScoped<IWorkerProfileService, WorkerProfileService>();
             services.AddScoped<IEmailVerificationService, EmailVerificationService>();
             services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+            services.AddScoped<IS3StorageService, S3StorageService>();
 
             // Регистрируем валидаторы
             services.AddSingleton<PasswordValidator>();
