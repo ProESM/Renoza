@@ -35,3 +35,40 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface RegisterRequest {
+  name: string;
+  displayName: string;
+  email: string;
+  phoneNumber: string;
+  phoneCountryCode: string;
+  password: string;
+}
+
+export interface RegisterResponse {
+  userId: string;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  phoneCountryCode: string;
+  message: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyPhoneRequest {
+  phoneNumber: string;
+  phoneCountryCode: string;
+  code: string;
+}
+
+export interface SendVerificationCodeRequest {
+  userId: string;
+  verificationType: 'email' | 'phone';
+  email?: string;
+  phoneNumber?: string;
+  phoneCountryCode?: string;
+}

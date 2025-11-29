@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Renoza.Common.Helpers;
 using Renoza.Domain.Entities.Users;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
@@ -22,6 +24,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис работы с паролями
+        /// </summary>
+        private readonly IPasswordService _passwordService;
+
+        #endregion
+
         #region Мапперы
 
         /// <summary>
@@ -35,14 +46,17 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// Сервис работы с пользователями
         /// </summary>
         /// <param name="dbContext">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
-        /// <param name="productRepository">Репозиторий продуктов</param>
+        /// <param name="userRepository">Репозиторий пользователей</param>
+        /// <param name="passwordService">Сервис работы с паролями</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public UserService(
             RenozaContext dbContext,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
+            IPasswordService passwordService,
             IMapper mapper) : base(dbContext)
         {
             _userRepository = userRepository;
+            _passwordService = passwordService;
             _mapper = mapper;
         }
 
@@ -54,6 +68,66 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         {
             var queryable = _userRepository.GetQueryable();
             return _mapper.ProjectTo<User>(queryable);
+        }
+
+        /// <summary>
+        /// Зарегистрировать нового пользователя
+        /// </summary>
+        public async Task<Result<User>> RegisterUserAsync(string name, string displayName, string email, string phoneNumber, string phoneCountryCode, string password)
+        {
+            // Проверяем уникальность имени пользователя
+            var existingUser = await _userRepository.GetQueryable()
+                .FirstOrDefaultAsync(u => u.Name == name);
+            if (existingUser != null)
+            {
+                return Result<User>.Failure("Пользователь с таким именем уже существует");
+            }
+
+            // Проверяем уникальность email
+            existingUser = await _userRepository.GetQueryable()
+                .FirstOrDefaultAsync(u => u.Email == email);
+            if (existingUser != null)
+            {
+                return Result<User>.Failure("Пользователь с таким email уже существует");
+            }
+
+            // Проверяем уникальность телефона
+            existingUser = await _userRepository.GetQueryable()
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber && u.PhoneCountryCode == phoneCountryCode);
+            if (existingUser != null)
+            {
+                return Result<User>.Failure("Пользователь с таким номером телефона уже существует");
+            }
+
+            // Создаем нового пользователя
+            var userId = Guid.NewGuid();
+            var userDao = new UserDao
+            {
+                Id = userId,
+                Name = name,
+                DisplayName = displayName,
+                Email = email,
+                PhoneNumber = phoneNumber,
+                PhoneCountryCode = phoneCountryCode,
+                IsEmailVerified = false,
+                IsPhoneNumberVerified = false,
+                IsActive = false, // Пользователь станет активным после верификации
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _userRepository.CreateAsync(userDao, CancellationToken.None);
+
+            // Создаем пароль для пользователя
+            var passwordCreated = await _passwordService.SetPasswordAsync(userId, password, CancellationToken.None);
+            if (!passwordCreated)
+            {
+                return Result<User>.Failure("Не удалось создать пароль");
+            }
+
+            await SaveChangesAsync();
+
+            return Result<User>.Success(_mapper.Map<User>(userDao));
         }
     }
 }

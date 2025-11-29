@@ -47,6 +47,14 @@ namespace Renoza.Infrastructure.Contexts
         /// Профили работников
         /// </summary>
         public DbSet<WorkerProfileDao> WorkerProfiles { get; set; }
+        /// <summary>
+        /// Верификация электронной почты
+        /// </summary>
+        public DbSet<EmailVerificationDao> EmailVerifications { get; set; }
+        /// <summary>
+        /// Верификация телефонных номеров
+        /// </summary>
+        public DbSet<PhoneVerificationDao> PhoneVerifications { get; set; }
 
         #endregion
 
@@ -73,6 +81,8 @@ namespace Renoza.Infrastructure.Contexts
             modelBuilder.Entity<UserPasswordDao>().ToTable("UserPasswords", "auth");
             modelBuilder.Entity<UserPasswordHistoryDao>().ToTable("UserPasswordHistory", "auth");
             modelBuilder.Entity<UserRoleDao>().ToTable("UserRoles", "auth");
+            modelBuilder.Entity<EmailVerificationDao>().ToTable("EmailVerifications", "auth");
+            modelBuilder.Entity<PhoneVerificationDao>().ToTable("PhoneVerifications", "auth");
 
             #endregion
 
@@ -133,6 +143,20 @@ namespace Renoza.Infrastructure.Contexts
 
             modelBuilder.Entity<UserRoleDao>()
                 .HasKey(x => new { x.UserId, x.RoleId });
+
+            #endregion
+
+            #region EmailVerificationDao
+
+            modelBuilder.Entity<EmailVerificationDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region PhoneVerificationDao
+
+            modelBuilder.Entity<PhoneVerificationDao>()
+                .HasKey(x => x.Id);
 
             #endregion
 
@@ -217,6 +241,26 @@ namespace Renoza.Infrastructure.Contexts
                 .HasOne(x => x.Role)
                 .WithMany(x => x.UserRoles)
                 .HasForeignKey(x => x.RoleId)
+                .IsRequired();
+
+            #endregion
+
+            #region EmailVerificationDao
+
+            modelBuilder.Entity<EmailVerificationDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.EmailVerifications)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            #endregion
+
+            #region PhoneVerificationDao
+
+            modelBuilder.Entity<PhoneVerificationDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.PhoneVerifications)
+                .HasForeignKey(x => x.UserId)
                 .IsRequired();
 
             #endregion

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { LoginRequest, AuthResponse, User, ResetPasswordRequest } from '../models/auth.models';
+import { LoginRequest, AuthResponse, User, ResetPasswordRequest, RegisterRequest, RegisterResponse, VerifyEmailRequest, VerifyPhoneRequest, SendVerificationCodeRequest } from '../models/auth.models';
 import { Role } from '../models/role.models';
 
 @Injectable({
@@ -229,5 +229,33 @@ export class AuthService {
    */
   hasAllRoles(roleIds: string[]): boolean {
     return roleIds.every(roleId => this.hasRole(roleId));
+  }
+
+  /**
+   * Регистрация нового пользователя
+   */
+  register(request: RegisterRequest): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${environment.apiUrl}/auth/register`, request);
+  }
+
+  /**
+   * Верификация email
+   */
+  verifyEmail(request: VerifyEmailRequest): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/verify-email`, request);
+  }
+
+  /**
+   * Верификация телефона
+   */
+  verifyPhone(request: VerifyPhoneRequest): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/verify-phone`, request);
+  }
+
+  /**
+   * Отправка кода верификации
+   */
+  sendVerificationCode(request: SendVerificationCodeRequest): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/send-verification-code`, request);
   }
 }

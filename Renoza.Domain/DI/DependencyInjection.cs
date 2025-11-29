@@ -111,6 +111,16 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<WorkerProfileDao, Guid>(context);
             });
+            services.AddScoped<IEntityWithIdRepository<EmailVerificationDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<EmailVerificationDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<PhoneVerificationDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<PhoneVerificationDao, Guid>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -127,6 +137,8 @@ namespace Renoza.Domain.DI
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<ICustomerProfileService, CustomerProfileService>();
             services.AddScoped<IWorkerProfileService, WorkerProfileService>();
+            services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+            services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
 
             // Регистрируем валидаторы
             services.AddSingleton<PasswordValidator>();

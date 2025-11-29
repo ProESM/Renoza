@@ -1,0 +1,155 @@
+<div class="verify-container">
+  <mat-card class="verify-card">
+    <mat-card-header>
+      <mat-card-title>Верификация</mat-card-title>
+      <mat-card-subtitle>Подтвердите ваш email и номер телефона</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-tab-group [(selectedIndex)]="selectedTabIndex" animationDuration="300ms">
+        <!-- Верификация Email -->
+        <mat-tab label="Email">
+          <form [formGroup]="emailVerifyForm" (ngSubmit)="onEmailVerify()" class="verify-form">
+            @if (emailVerified) {
+              <div class="success-message">
+                <mat-icon>check_circle</mat-icon>
+                <span>Email успешно подтвержден!</span>
+              </div>
+            } @else {
+              <div class="info-message">
+                <mat-icon>info</mat-icon>
+                <span>Код верификации отправлен на: <strong>{{ email }}</strong></span>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" required>
+                <mat-icon matSuffix>email</mat-icon>
+                @if (ef['email'].hasError('required') && ef['email'].touched) {
+                  <mat-error>Email обязателен</mat-error>
+                }
+                @if (ef['email'].hasError('email') && ef['email'].touched) {
+                  <mat-error>Некорректный формат email</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Код верификации</mat-label>
+                <input matInput
+                       formControlName="code"
+                       maxlength="6"
+                       required>
+                <mat-icon matSuffix>lock</mat-icon>
+                @if (ef['code'].hasError('required') && ef['code'].touched) {
+                  <mat-error>Код обязателен</mat-error>
+                }
+                @if (ef['code'].hasError('minlength') && ef['code'].touched) {
+                  <mat-error>Код должен состоять из 6 символов</mat-error>
+                }
+              </mat-form-field>
+
+              @if (error && selectedTabIndex === 0) {
+                <div class="error-message">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ error }}</span>
+                </div>
+              }
+
+              <div class="actions">
+                <button mat-raised-button
+                        color="primary"
+                        type="submit"
+                        [disabled]="loading || emailVerifyForm.invalid"
+                        class="verify-button">
+                  @if (loading && selectedTabIndex === 0) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <span>Подтвердить Email</span>
+                  }
+                </button>
+
+                <button mat-button type="button" (click)="resendEmailCode()" class="resend-button">
+                  Отправить код повторно
+                </button>
+              </div>
+            }
+          </form>
+        </mat-tab>
+
+        <!-- Верификация телефона -->
+        <mat-tab label="Телефон">
+          <form [formGroup]="phoneVerifyForm" (ngSubmit)="onPhoneVerify()" class="verify-form">
+            @if (phoneVerified) {
+              <div class="success-message">
+                <mat-icon>check_circle</mat-icon>
+                <span>Телефон успешно подтвержден!</span>
+              </div>
+            } @else {
+              <div class="info-message">
+                <mat-icon>info</mat-icon>
+                <span>Код верификации отправлен на: <strong>{{ phoneCountryCode }}{{ phoneNumber }}</strong></span>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Номер телефона</mat-label>
+                <input matInput type="tel" formControlName="phoneNumber" required readonly>
+                <mat-icon matSuffix>phone</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Код верификации</mat-label>
+                <input matInput
+                       formControlName="code"
+                       maxlength="6"
+                       required>
+                <mat-icon matSuffix>lock</mat-icon>
+                @if (pf['code'].hasError('required') && pf['code'].touched) {
+                  <mat-error>Код обязателен</mat-error>
+                }
+                @if (pf['code'].hasError('minlength') && pf['code'].touched) {
+                  <mat-error>Код должен состоять из 6 символов</mat-error>
+                }
+              </mat-form-field>
+
+              @if (error && selectedTabIndex === 1) {
+                <div class="error-message">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ error }}</span>
+                </div>
+              }
+
+              <div class="actions">
+                <button mat-raised-button
+                        color="primary"
+                        type="submit"
+                        [disabled]="loading || phoneVerifyForm.invalid"
+                        class="verify-button">
+                  @if (loading && selectedTabIndex === 1) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <span>Подтвердить Телефон</span>
+                  }
+                </button>
+
+                <button mat-button type="button" (click)="resendPhoneCode()" class="resend-button">
+                  Отправить код повторно
+                </button>
+              </div>
+            }
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+
+      @if (emailVerified && phoneVerified) {
+        <div class="complete-message">
+          <mat-icon>done_all</mat-icon>
+          <span>Верификация завершена! Вы будете перенаправлены на страницу входа...</span>
+        </div>
+      }
+
+      <div class="login-link">
+        <a routerLink="/auth/login">Вернуться на страницу входа</a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

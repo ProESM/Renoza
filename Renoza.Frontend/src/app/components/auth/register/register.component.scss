@@ -1,0 +1,115 @@
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px;
+}
+
+.register-card {
+  max-width: 500px;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+mat-card-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+mat-card-title {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+mat-card-subtitle {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.register-form {
+  padding: 16px 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.phone-input-row {
+  display: flex;
+  gap: 12px;
+
+  .country-code-field {
+    flex: 0 0 140px;
+  }
+
+  .phone-number-field {
+    flex: 1;
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f44336;
+  margin: 8px 0;
+  padding: 8px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  font-size: 14px;
+
+  mat-icon {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.register-button {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+
+  mat-spinner {
+    display: inline-block;
+    margin: 0 auto;
+  }
+}
+
+.login-link {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+
+  a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .register-card {
+    max-width: 100%;
+  }
+
+  .phone-input-row {
+    .country-code-field {
+      flex: 0 0 120px;
+    }
+  }
+}

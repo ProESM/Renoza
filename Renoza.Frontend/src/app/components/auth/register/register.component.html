@@ -1,0 +1,127 @@
+<div class="register-container">
+  <mat-card class="register-card">
+    <mat-card-header>
+      <mat-card-title>Регистрация</mat-card-title>
+      <mat-card-subtitle>Создание нового аккаунта в Renoza</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Имя пользователя</mat-label>
+          <input matInput formControlName="name" required>
+          <mat-icon matSuffix>person</mat-icon>
+          @if (f['name'].hasError('required') && f['name'].touched) {
+            <mat-error>Имя пользователя обязательно</mat-error>
+          }
+          @if (f['name'].hasError('minlength') && f['name'].touched) {
+            <mat-error>Минимум 3 символа</mat-error>
+          }
+          @if (f['name'].hasError('maxlength') && f['name'].touched) {
+            <mat-error>Максимум 50 символов</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Отображаемое имя</mat-label>
+          <input matInput formControlName="displayName" required>
+          <mat-icon matSuffix>badge</mat-icon>
+          @if (f['displayName'].hasError('required') && f['displayName'].touched) {
+            <mat-error>Отображаемое имя обязательно</mat-error>
+          }
+          @if (f['displayName'].hasError('maxlength') && f['displayName'].touched) {
+            <mat-error>Максимум 100 символов</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" required>
+          <mat-icon matSuffix>email</mat-icon>
+          @if (f['email'].hasError('required') && f['email'].touched) {
+            <mat-error>Email обязателен</mat-error>
+          }
+          @if (f['email'].hasError('email') && f['email'].touched) {
+            <mat-error>Некорректный формат email</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="phone-input-row">
+          <mat-form-field appearance="outline" class="country-code-field">
+            <mat-label>Код</mat-label>
+            <mat-select formControlName="phoneCountryCode" (selectionChange)="onCountryChange($event.value)" required>
+              <mat-select-trigger>
+                {{ selectedCountry?.flag }} {{ selectedCountry?.code }}
+              </mat-select-trigger>
+              @for (code of phoneCountryCodes; track code.id) {
+                <mat-option [value]="code.code">
+                  {{ code.displayText }}
+                </mat-option>
+              }
+            </mat-select>
+            @if (f['phoneCountryCode'].hasError('required') && f['phoneCountryCode'].touched) {
+              <mat-error>Код обязателен</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="phone-number-field">
+            <mat-label>Номер телефона</mat-label>
+            <input matInput
+                   type="tel"
+                   formControlName="phoneNumber"
+                   required>
+            <mat-icon matSuffix>phone</mat-icon>
+            @if (f['phoneNumber'].hasError('required') && f['phoneNumber'].touched) {
+              <mat-error>Номер телефона обязателен</mat-error>
+            }
+            @if (f['phoneNumber'].hasError('pattern') && f['phoneNumber'].touched) {
+              <mat-error>Только цифры</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Пароль</mat-label>
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password"
+                 required>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          @if (f['password'].hasError('required') && f['password'].touched) {
+            <mat-error>Пароль обязателен</mat-error>
+          }
+          @if (f['password'].hasError('minlength') && f['password'].touched) {
+            <mat-error>Минимум 6 символов</mat-error>
+          }
+        </mat-form-field>
+
+        @if (error) {
+          <div class="error-message">
+            <mat-icon>error</mat-icon>
+            <span>{{ error }}</span>
+          </div>
+        }
+
+        <div class="actions">
+          <button mat-raised-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="loading || registerForm.invalid"
+                  class="register-button">
+            @if (loading) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <span>Зарегистрироваться</span>
+            }
+          </button>
+
+          <div class="login-link">
+            Уже есть аккаунт? <a routerLink="/auth/login">Войти</a>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -74,5 +74,13 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// Навигационное свойство: связи с профилями работников
         /// </summary>
         public virtual ICollection<WorkerProfileDao> WorkerProfiles { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с верификациями email
+        /// </summary>
+        public virtual ICollection<EmailVerificationDao> EmailVerifications { get; set; } = null!;
+        /// <summary>
+        /// Навигационное свойство: связи с верификациями телефона
+        /// </summary>
+        public virtual ICollection<PhoneVerificationDao> PhoneVerifications { get; set; } = null!;
     }
 }
