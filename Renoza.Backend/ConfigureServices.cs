@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Renoza.Domain.Options;
 
 namespace Renoza.Backend
@@ -40,29 +41,22 @@ namespace Renoza.Backend
         {
             services.AddSwaggerGen(options =>
             {
-                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                    Description = "Введите JWT токен в формате: Bearer {ваш токен}"
-                });
+                // Добавляем определение схемы безопасности Bearer
+                var securityScheme = new OpenApiSecurityScheme();
+                securityScheme.Description = "Введите JWT токен в формате: Bearer {ваш токен}";
+                securityScheme.Name = "Authorization";
+                securityScheme.Scheme = "bearer";
+                securityScheme.BearerFormat = "JWT";
 
-                options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                options.AddSecurityDefinition("Bearer", securityScheme);
+
+                // Добавляем требование безопасности для всех операций
+                options.AddSecurityRequirement(document =>
                 {
-                    {
-                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                        {
-                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                            {
-                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        Array.Empty<string>()
-                    }
+                    var requirement = new OpenApiSecurityRequirement();
+                    var scheme = new OpenApiSecuritySchemeReference("Bearer", document);
+                    requirement.Add(scheme, new List<string>());
+                    return requirement;
                 });
             });
 

@@ -46,6 +46,11 @@ namespace Renoza.Domain.DI
             services.Configure<S3Options>(configuration.GetSection("S3Settings"));
             services.AddSingleton(s3Options);
 
+            // Регистрируем Email настройки
+            var emailOptions = configuration.GetRequiredConfigurationSection<EmailOptions>("EmailSettings");
+            services.Configure<EmailOptions>(configuration.GetSection("EmailSettings"));
+            services.AddSingleton(emailOptions);
+
             // Регистрируем RenozaContext как Scoped
             // MassTransit автоматически создаёт scope для каждого Consumer,
             // поэтому каждое сообщение будет обрабатываться с новым экземпляром контекста
@@ -171,6 +176,7 @@ namespace Renoza.Domain.DI
             services.AddScoped<IEmailVerificationService, EmailVerificationService>();
             services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
             services.AddScoped<IS3StorageService, S3StorageService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             // Регистрируем валидаторы
             services.AddSingleton<PasswordValidator>();

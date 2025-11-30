@@ -20,8 +20,11 @@ namespace Renoza.Backend.Attributes
         {
             base.OnActionExecuted(actionExecutedContext);
 
-            var typeProperty = actionExecutedContext.Result.GetType().GetProperty("Value");
-            var dataResult = typeProperty?.GetValue(actionExecutedContext.Result);
+            var result = actionExecutedContext.Result;
+            if (result == null) return;
+
+            var typeProperty = result.GetType().GetProperty("Value");
+            var dataResult = typeProperty?.GetValue(result);
             var count = actionExecutedContext.HttpContext.Request.ODataFeature().TotalCount;
 
             if (actionExecutedContext.Result is ObjectResult responseContent)

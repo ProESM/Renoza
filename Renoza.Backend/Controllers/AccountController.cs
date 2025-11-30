@@ -28,7 +28,13 @@ namespace Renoza.Backend.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest request)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(new { message = "Пользователь не авторизован" });
+            }
+
+            var userId = Guid.Parse(userIdClaim);
 
             // Валидация нового пароля
             var (isValid, errorMessage) = _passwordValidator.Validate(request.NewPassword);

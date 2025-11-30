@@ -38,6 +38,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис отправки email
+        /// </summary>
+        private readonly IEmailService _emailService;
+
+        #endregion
+
         /// <summary>
         /// Сервис верификации электронной почты
         /// </summary>
@@ -45,15 +54,18 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="emailVerificationRepository">Репозиторий верификаций email</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
+        /// <param name="emailService">Сервис отправки email</param>
         public EmailVerificationService(
             RenozaContext dbContext,
             IEntityWithIdRepository<EmailVerificationDao, Guid> emailVerificationRepository,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper,
+            IEmailService emailService) : base(dbContext)
         {
             _emailVerificationRepository = emailVerificationRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -99,8 +111,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             await _emailVerificationRepository.CreateAsync(emailVerification, CancellationToken.None);
             await SaveChangesAsync();
 
-            // TODO: Отправить email с кодом верификации
-            // await _emailService.SendVerificationCodeAsync(email, code);
+            // Отправляем email с кодом верификации
+            var emailSent = await _emailService.SendVerificationCodeAsync(email, code);
+            if (!emailSent)
+            {
+                // Логируем ошибку, но не блокируем процесс верификации
+                // Пользователь сможет запросить код повторно
+                return Result<EmailVerification>.Failure("Не удалось отправить email с кодом верификации");
+            }
 
             return Result<EmailVerification>.Success(_mapper.Map<EmailVerification>(emailVerification));
         }
