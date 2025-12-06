@@ -21,6 +21,48 @@ services:
       # timeout: 5s
       # retries: 5
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: renoza-redis
+    command: redis-server --appendonly yes
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - renoza-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: renoza-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-admin}
+      - TZ=Europe/Moscow
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - renoza-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   # Backend API
   backend:
     build:
@@ -33,12 +75,18 @@ services:
       # - ConnectionStrings__Renoza=Host=postgres;Port=5432;Database=${POSTGRES_DB:-renoza};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
       # Используйте внешнюю БД PostgreSQL
       - ConnectionStrings__Renoza=Host=${POSTGRES_HOST:-postgres};Port=5432;Database=${POSTGRES_DB:-renoza};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - Redis__ConnectionString=redis:6379
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=${RABBITMQ_USER:-admin}
+      - RabbitMq__Password=${RABBITMQ_PASSWORD:-admin}
       - TZ=Europe/Moscow
     ports:
       - "${BACKEND_PORT:-8080}:8080"
-    # depends_on:
-      # postgres:
-        # condition: service_healthy
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - renoza-network
     restart: unless-stopped
@@ -79,3 +127,7 @@ networks:
 volumes:
   postgres_data:
     name: renoza-postgres-data
+  redis_data:
+    name: renoza-redis-data
+  rabbitmq_data:
+    name: renoza-rabbitmq-data

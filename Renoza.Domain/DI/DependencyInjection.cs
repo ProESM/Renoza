@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Renoza.Domain.Extensions;
 using Renoza.Domain.Mappings;
 using Renoza.Domain.Options;
@@ -15,6 +16,8 @@ using Renoza.Infrastructure.Contexts;
 using Renoza.Infrastructure.Entities.Renoza;
 using Renoza.Infrastructure.Repositories.Implementations.BaseImplementations;
 using Renoza.Infrastructure.Repositories.Interfaces.BaseInterfaces;
+using Serilog;
+using StackExchange.Redis;
 
 namespace Renoza.Domain.DI
 {
@@ -23,34 +26,11 @@ namespace Renoza.Domain.DI
     /// </summary>
     public static class DependencyInjection
     {
-        /// <summary>
-        /// Добавить зависимости Domain слоя в DI контейнер
-        /// </summary>
-        /// <param name="services">Коллекция сервисов</param>
-        /// <param name="configuration">Конфигурация приложения</param>
-        /// <returns>Коллекция сервисов</returns>
-        public static IServiceCollection AddDomainServices(
+        // Базовые зависимости (обязательные для всех)
+        public static IServiceCollection AddDomainCore(
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Регистрируем конфигурационные опции как Singleton
-            var jwtSettings = configuration.GetRequiredConfigurationSection<JwtSettings>("JwtSettings");
-            services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-            services.AddSingleton(jwtSettings);
-            var passwordPolicyOptions = configuration.GetRequiredConfigurationSection<PasswordPolicyOptions>("PasswordPolicy");
-            services.Configure<PasswordPolicyOptions>(configuration.GetSection("PasswordPolicy"));
-            services.AddSingleton(passwordPolicyOptions);
-
-            // Регистрируем S3 настройки
-            var s3Options = configuration.GetRequiredConfigurationSection<S3Options>("S3Settings");
-            services.Configure<S3Options>(configuration.GetSection("S3Settings"));
-            services.AddSingleton(s3Options);
-
-            // Регистрируем Email настройки
-            var emailOptions = configuration.GetRequiredConfigurationSection<EmailOptions>("EmailSettings");
-            services.Configure<EmailOptions>(configuration.GetSection("EmailSettings"));
-            services.AddSingleton(emailOptions);
-
             // Регистрируем RenozaContext как Scoped
             // MassTransit автоматически создаёт scope для каждого Consumer,
             // поэтому каждое сообщение будет обрабатываться с новым экземпляром контекста
@@ -141,47 +121,189 @@ namespace Renoza.Domain.DI
                 config.AddMaps(typeof(UserMapperProfile).Assembly);
             });
 
-            // Регистрируем S3 клиент как Singleton
-            services.AddSingleton<IAmazonS3>(serviceProvider =>
-            {
-                var options = serviceProvider.GetRequiredService<S3Options>();
-                var config = new AmazonS3Config
-                {
-                    ForcePathStyle = options.ForcePathStyle
-                };
-
-                // Если указан ServiceUrl (для альтернативных S3-совместимых хранилищ)
-                if (!string.IsNullOrEmpty(options.ServiceUrl))
-                {
-                    config.ServiceURL = options.ServiceUrl;
-                }
-                // Если указан Region (для AWS S3)
-                else if (!string.IsNullOrEmpty(options.Region))
-                {
-                    config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(options.Region);
-                }
-
-                var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
-                return new AmazonS3Client(credentials, config);
-            });
-
             // Регистрируем сервисы
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IPasswordService, PasswordService>();
-            services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IPhoneCountryCodeService, PhoneCountryCodeService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<ICustomerProfileService, CustomerProfileService>();
             services.AddScoped<IWorkerProfileService, WorkerProfileService>();
-            services.AddScoped<IEmailVerificationService, EmailVerificationService>();
             services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
-            services.AddScoped<IS3StorageService, S3StorageService>();
-            services.AddScoped<IEmailService, EmailService>();
-
-            // Регистрируем валидаторы
-            services.AddSingleton<PasswordValidator>();
 
             return services;
+        }
+
+        // Опционально: Jwt и PasswordPolicy
+        public static IServiceCollection AddJwtServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("JwtSettings").Exists())
+            {
+                // Регистрируем Jwt настройки
+                var jwtSettings = configuration.GetRequiredConfigurationSection<JwtSettings>("JwtSettings");
+                services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+                services.AddSingleton(jwtSettings);
+
+                services.AddScoped<IJwtService, JwtService>();
+            }
+            if (configuration.GetSection("PasswordPolicy").Exists())
+            {
+                // Регистрируем настройки политики паролей
+                var passwordPolicyOptions = configuration.GetRequiredConfigurationSection<PasswordPolicyOptions>("PasswordPolicy");
+                services.Configure<PasswordPolicyOptions>(configuration.GetSection("PasswordPolicy"));
+                services.AddSingleton(passwordPolicyOptions);
+
+                // Регистрируем валидаторы
+                services.AddSingleton<PasswordValidator>();
+
+                services.AddScoped<IUserService, UserService>();
+                services.AddScoped<IPasswordService, PasswordService>();
+            }
+            return services;
+        }
+
+        // Опционально: Email сервисы
+        public static IServiceCollection AddEmailServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("EmailSettings").Exists())
+            {
+                var emailOptions = configuration.GetRequiredConfigurationSection<EmailOptions>("EmailSettings");
+                services.Configure<EmailOptions>(configuration.GetSection("EmailSettings"));
+                services.AddSingleton(emailOptions);
+                services.AddScoped<IEmailService, EmailService>();
+                services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+            }
+            return services;
+        }
+
+        // Опционально: RabbitMQ
+        public static IServiceCollection AddRabbitMqServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("RabbitMq").Exists())
+            {
+                var rabbitMqOptions = configuration.GetRequiredConfigurationSection<RabbitMqOptions>("RabbitMq");
+                services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMq"));
+                services.AddSingleton(rabbitMqOptions);
+
+                if (configuration.GetSection("CashReceiptBrokerOptions").Exists())
+                {
+                    var cashReceiptBrokerOptions = configuration.GetRequiredConfigurationSection<CashReceiptBrokerOptions>("CashReceiptBrokerOptions");
+                    services.Configure<CashReceiptBrokerOptions>(configuration.GetSection("CashReceiptBrokerOptions"));
+                    services.AddSingleton(cashReceiptBrokerOptions);
+                }
+                if (configuration.GetSection("QueueOptions").Exists())
+                {
+                    var queueOptions = configuration.GetRequiredConfigurationSection<QueueOptions>("QueueOptions");
+                    services.Configure<QueueOptions>(configuration.GetSection("QueueOptions"));
+                    services.AddSingleton(queueOptions);
+
+                    services.AddScoped<IReceiptService, ReceiptService>();
+                }
+            }
+            return services;
+        }
+
+        // Опционально: Redis
+        public static IServiceCollection AddRedisServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("Redis").Exists())
+            {
+                // Регистрируем Redis настройки
+                var redisOptions = configuration.GetRequiredConfigurationSection<RedisOptions>("Redis");
+                services.Configure<RedisOptions>(configuration.GetSection("Redis"));
+                services.AddSingleton(redisOptions);
+
+                // Регистрируем Redis ConnectionMultiplexer как Singleton
+                services.AddSingleton<IConnectionMultiplexer>(serviceProvider =>
+                {
+                    var configurationOptions = ConfigurationOptions.Parse(redisOptions.ConnectionString);
+                    configurationOptions.ConnectTimeout = redisOptions.ConnectTimeout;
+                    configurationOptions.SyncTimeout = redisOptions.SyncTimeout;
+                    configurationOptions.AbortOnConnectFail = false; // Не падать при недоступности Redis
+
+                    return ConnectionMultiplexer.Connect(configurationOptions);
+                });
+            }
+            return services;
+        }
+
+        // Опционально: Rate Limiting
+        public static IServiceCollection AddRateLimitingServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("RateLimit").Exists())
+            {
+                // Регистрируем Rate Limit настройки
+                var rateLimitOptions = configuration.GetRequiredConfigurationSection<RateLimitOptions>("RateLimit");
+                services.Configure<RateLimitOptions>(configuration.GetSection("RateLimit"));
+                services.AddSingleton(rateLimitOptions);
+
+                services.AddSingleton<IRateLimitService, RedisRateLimitService>();
+            }
+            return services;
+        }
+
+        // Опционально: S3
+        public static IServiceCollection AddS3Services(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            if (configuration.GetSection("S3Settings").Exists())
+            {
+                // Регистрируем S3 настройки
+                var s3Options = configuration.GetRequiredConfigurationSection<S3Options>("S3Settings");
+                services.Configure<S3Options>(configuration.GetSection("S3Settings"));
+                services.AddSingleton(s3Options);
+
+                // Регистрируем S3 клиент как Singleton
+                services.AddSingleton<IAmazonS3>(serviceProvider =>
+                {
+                    var config = new AmazonS3Config
+                    {
+                        ForcePathStyle = s3Options.ForcePathStyle
+                    };
+
+                    // Если указан ServiceUrl (для альтернативных S3-совместимых хранилищ)
+                    if (!string.IsNullOrEmpty(s3Options.ServiceUrl))
+                    {
+                        config.ServiceURL = s3Options.ServiceUrl;
+                    }
+                    // Если указан Region (для AWS S3)
+                    else if (!string.IsNullOrEmpty(s3Options.Region))
+                    {
+                        config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(s3Options.Region);
+                    }
+
+                    var credentials = new BasicAWSCredentials(s3Options.AccessKey, s3Options.SecretKey);
+                    return new AmazonS3Client(credentials, config);
+                });
+
+                services.AddScoped<IS3StorageService, S3StorageService>();
+            }
+            return services;
+        }
+
+        // Опционально: Serilog
+        public static IHostBuilder ConfigureSerilog(
+            this IHostBuilder hostBuilder,
+            IConfiguration configuration)
+        {
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
+                .Enrich.WithThreadId()
+                .Enrich.WithProcessId()
+                .CreateLogger();
+
+            hostBuilder.UseSerilog();
+
+            return hostBuilder;
         }
     }
 }

@@ -1,8 +1,12 @@
 using Renoza.Backend.Helpers;
 using Renoza.Domain.DI;
-using Renoza.Backend;
+using Renoza.Backend.Configuration;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Настройка Serilog
+builder.Host.ConfigureSerilog(builder.Configuration);
 
 Console.WriteLine(builder.Environment.EnvironmentName);
 
@@ -29,9 +33,18 @@ builder.Services.AddCors(options =>
 });
 
 // Регистрируем зависимости Domain слоя (DbContext, UnitOfWork, репозитории, AutoMapper, сервисы, конфигурационные опции)
-builder.Services.AddDomainServices(builder.Configuration);
+builder.Services.AddDomainCore(builder.Configuration)
+    .AddJwtServices(builder.Configuration)
+    .AddEmailServices(builder.Configuration)
+    .AddRabbitMqServices(builder.Configuration)
+    .AddRedisServices(builder.Configuration)
+    .AddRateLimitingServices(builder.Configuration)
+    .AddS3Services(builder.Configuration)
+    ;
 // Настраиваем Jwt Bearer аутентификацию
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
+// Настраиваем MassTransit и подключение к RabbitMQ
+builder.Services.AddRabbitMqMassTransit();
 
 builder.Services.AddAuthorization();
 
@@ -60,4 +73,16 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+try
+{
+    Log.Information("Запуск приложения Renoza.Backend");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Приложение неожиданно завершилось");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

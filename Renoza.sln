@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.Domain", "Renoza.Dom
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.DbMigration", "Renoza.DbMigration\Renoza.DbMigration.csproj", "{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renoza.CashReceiptBroker", "Renoza.CashReceiptBroker\Renoza.CashReceiptBroker.csproj", "{47A05582-E2CD-4978-BF6B-D4AC23EE0F68}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BB58147-6A76-4EAE-BB20-7CF90A1F8C85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47A05582-E2CD-4978-BF6B-D4AC23EE0F68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47A05582-E2CD-4978-BF6B-D4AC23EE0F68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47A05582-E2CD-4978-BF6B-D4AC23EE0F68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47A05582-E2CD-4978-BF6B-D4AC23EE0F68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
