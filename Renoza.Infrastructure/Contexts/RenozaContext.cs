@@ -55,6 +55,26 @@ namespace Renoza.Infrastructure.Contexts
         /// Верификация телефонных номеров
         /// </summary>
         public DbSet<PhoneVerificationDao> PhoneVerifications { get; set; }
+        /// <summary>
+        /// Кассовые чеки
+        /// </summary>
+        public DbSet<CashReceiptDao> CashReceipts { get; set; }
+        /// <summary>
+        /// Кассовые чеки заказчика
+        /// </summary>
+        public DbSet<CustomerCashReceiptDao> CustomerCashReceipts { get; set; }
+        /// <summary>
+        /// Запросы на загрузку чеков
+        /// </summary>
+        public DbSet<CashReceiptJobDao> CashReceiptJobs { get; set; }
+        /// <summary>
+        /// Статусы запросов на загрузку чеков
+        /// </summary>
+        public DbSet<CashReceiptJobStatusDao> CashReceiptJobStatuses { get; set; }
+        /// <summary>
+        /// История изменений статусов запросов на загрузку чеков
+        /// </summary>
+        public DbSet<CashReceiptJobHistoryDao> CashReceiptJobHistory { get; set; }
 
         #endregion
 
@@ -92,6 +112,12 @@ namespace Renoza.Infrastructure.Contexts
             modelBuilder.Entity<CustomerProfileDao>().ToTable("CustomerProfiles", "public");
             modelBuilder.Entity<PhoneCountryCodeDao>().ToTable("PhoneCountryCodes", "public");
             modelBuilder.Entity<WorkerProfileDao>().ToTable("WorkerProfiles", "public");
+
+            modelBuilder.Entity<CashReceiptDao>().ToTable("CashReceipts", "public");
+            modelBuilder.Entity<CustomerCashReceiptDao>().ToTable("CustomerCashReceipts", "public");
+            modelBuilder.Entity<CashReceiptJobDao>().ToTable("CashReceiptJobs", "public");
+            modelBuilder.Entity<CashReceiptJobStatusDao>().ToTable("CashReceiptJobStatuses", "public");
+            modelBuilder.Entity<CashReceiptJobHistoryDao>().ToTable("CashReceiptJobHistory", "public");
 
             #endregion
 
@@ -202,6 +228,49 @@ namespace Renoza.Infrastructure.Contexts
 
             #endregion
 
+            #region CustomerCashReceiptDao
+
+            modelBuilder.Entity<CustomerCashReceiptDao>()
+                .HasKey(x => new { x.CustomerId, x.CashReceiptId });
+
+            #endregion
+
+            #region CashReceiptDao
+
+            modelBuilder.Entity<CashReceiptDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CashReceiptJobDao
+
+            modelBuilder.Entity<CashReceiptJobDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CashReceiptJobStatusDao
+
+            modelBuilder.Entity<CashReceiptJobStatusDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<CashReceiptJobStatusDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd(); // Configures 'Id' to be auto-generated on add
+
+            #endregion
+
+            #region CashReceiptJobHistoryDao
+
+            modelBuilder.Entity<CashReceiptJobHistoryDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<CashReceiptJobHistoryDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd(); // Configures 'Id' to be auto-generated on add
+
+            #endregion
+
             #endregion
 
             #endregion
@@ -293,6 +362,60 @@ namespace Renoza.Infrastructure.Contexts
                 .HasOne(x => x.User)
                 .WithMany(x => x.WorkerProfiles)
                 .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            #endregion
+
+            #region CashReceiptDao
+
+            
+
+            #endregion
+
+            #region CashReceiptJobDao
+
+            modelBuilder.Entity<CashReceiptJobDao>()
+                .HasOne(x => x.Status)
+                .WithMany(x => x.CashReceiptJobs)
+                .HasForeignKey(x => x.StatusId)
+                .IsRequired();
+
+            modelBuilder.Entity<CashReceiptJobDao>()
+                .HasOne(x => x.CashReceipt)
+                .WithMany(x => x.CashReceiptJobs)
+                .HasForeignKey(x => x.CashReceiptId)
+                .IsRequired(false);
+
+            #endregion
+
+            #region CashReceiptJobHistoryDao
+
+            modelBuilder.Entity<CashReceiptJobHistoryDao>()
+                .HasOne(x => x.Job)
+                .WithMany(x => x.History)
+                .HasForeignKey(x => x.JobId)
+                .IsRequired();
+
+            modelBuilder.Entity<CashReceiptJobHistoryDao>()
+                .HasOne(x => x.Status)
+                .WithMany(x => x.CashReceiptJobHistory)
+                .HasForeignKey(x => x.StatusId)
+                .IsRequired();
+
+            #endregion
+
+            #region CustomerCashReceiptDao
+
+            modelBuilder.Entity<CustomerCashReceiptDao>()
+                .HasOne(x => x.Customer)
+                .WithMany(x => x.CustomerCashReceipts)
+                .HasForeignKey(x => x.CustomerId)
+                .IsRequired();
+
+            modelBuilder.Entity<CustomerCashReceiptDao>()
+                .HasOne(x => x.CashReceipt)
+                .WithMany(x => x.CustomerCashReceipts)
+                .HasForeignKey(x => x.CashReceiptId)
                 .IsRequired();
 
             #endregion

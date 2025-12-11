@@ -73,7 +73,9 @@ public class Program
         services.AddDomainCore(context.Configuration)
             .AddRabbitMqServices(context.Configuration)
             .AddRedisServices(context.Configuration)
-            .AddRateLimitingServices(context.Configuration);
+            .AddRateLimitingServices(context.Configuration)
+            .AddS3Services(context.Configuration)
+            ;
         services.AddRabbitMqMassTransit();
 
         return services

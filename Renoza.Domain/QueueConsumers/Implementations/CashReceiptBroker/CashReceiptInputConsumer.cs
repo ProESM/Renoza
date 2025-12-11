@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
+using Renoza.Domain.Enums;
 using Renoza.Domain.Exceptions;
 using Renoza.Domain.Messages.CashReceipt;
 using Renoza.Domain.Options;
@@ -29,6 +30,10 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
         /// Сервис для проверки Rate Limiting
         /// </summary>
         private readonly IRateLimitService _rateLimitService;
+        /// <summary>
+        /// Сервис для работы с заданиями на обработку чеков
+        /// </summary>
+        private readonly ICashReceiptJobService _cashReceiptJobService;
 
         /// <summary>
         /// Consumer для обработки входящих кассовых чеков
@@ -37,16 +42,19 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
         /// <param name="bus">Шина сообщений</param>
         /// <param name="cashReceiptBrokerOptions">Настройки брокера кассовых чеков</param>
         /// <param name="rateLimitService">Сервис для проверки Rate Limiting</param>
+        /// <param name="cashReceiptJobService">Сервис для работы с заданиями на обработку чеков</param>
         public CashReceiptInputConsumer(
             ILogger<CashReceiptInputConsumer> logger,
             IBus bus,
             CashReceiptBrokerOptions cashReceiptBrokerOptions,
-            IRateLimitService rateLimitService)
+            IRateLimitService rateLimitService,
+            ICashReceiptJobService cashReceiptJobService)
         {
             _logger = logger;
             _bus = bus;
             _cashReceiptBrokerOptions = cashReceiptBrokerOptions;
             _rateLimitService = rateLimitService;
+            _cashReceiptJobService = cashReceiptJobService;
         }
 
         public async Task Consume(ConsumeContext<CashReceiptInputMessage> context)
@@ -60,24 +68,64 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
         {
             _logger.LogInformation($"Получено сообщение из очереди {_cashReceiptBrokerOptions.CashReceiptInputConsumerQueueName}. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
 
-            // Проверка Rate Limiting
-            var isAllowed = await _rateLimitService.IsAllowedAsync(cashReceiptInputMessage.IpAddress);
-            if (!isAllowed)
+            try
             {
-                _logger.LogWarning($"Сообщение отклонено из-за превышения rate limit. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
+                // Проверка Rate Limiting
+                var isAllowed = await _rateLimitService.IsAllowedAsync(cashReceiptInputMessage.IpAddress);
+                if (!isAllowed)
+                {
+                    _logger.LogWarning($"Сообщение отклонено из-за превышения rate limit. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
 
-                // Получаем информацию о лимите для логирования
-                var rateLimitInfo = await _rateLimitService.GetRateLimitInfoAsync(cashReceiptInputMessage.IpAddress);
-                _logger.LogWarning($"Rate limit для IP {cashReceiptInputMessage.IpAddress}: {rateLimitInfo.CurrentCount}/{rateLimitInfo.Limit} за {rateLimitInfo.WindowDuration.TotalSeconds}с");
+                    // Получаем информацию о лимите для логирования
+                    var rateLimitInfo = await _rateLimitService.GetRateLimitInfoAsync(cashReceiptInputMessage.IpAddress);
+                    _logger.LogWarning($"Rate limit для IP {cashReceiptInputMessage.IpAddress}: {rateLimitInfo.CurrentCount}/{rateLimitInfo.Limit} за {rateLimitInfo.WindowDuration.TotalSeconds}с");
 
-                // Отклоняем сообщение - оно попадёт в Dead Letter Queue
-                throw new RateLimitExceededException(cashReceiptInputMessage.IpAddress, rateLimitInfo.CurrentCount, rateLimitInfo.Limit);
+                    // Обновляем статус Job на Cancelled
+                    await _cashReceiptJobService.CancelJobAsync(
+                        cashReceiptInputMessage.JobId,
+                        $"Превышен rate limit для IP {cashReceiptInputMessage.IpAddress}");
+
+                    // Отклоняем сообщение - оно попадёт в Dead Letter Queue
+                    throw new RateLimitExceededException(cashReceiptInputMessage.IpAddress, rateLimitInfo.CurrentCount, rateLimitInfo.Limit);
+                }
+
+                _logger.LogInformation($"Сообщение принято для обработки. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
+
+                // Обновляем статус на Validating
+                await _cashReceiptJobService.UpdateJobStatusAsync(
+                    cashReceiptInputMessage.JobId,
+                    CashReceiptJobStatus.Validating,
+                    "Начата валидация QR кода");
+
+                // Отправляем сообщение в очередь валидации
+                var validationMessage = new CashReceiptValidationMessage
+                {
+                    JobId = cashReceiptInputMessage.JobId,
+                    QrSource = cashReceiptInputMessage.QrSource
+                };
+
+                var endpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptValidationConsumerQueueName}"));
+                await endpoint.Send(validationMessage);
+
+                _logger.LogInformation($"JobId: {cashReceiptInputMessage.JobId}: Сообщение обработано, отправлено на валидацию.");
             }
+            catch (RateLimitExceededException)
+            {
+                // Пробрасываем исключение дальше для Dead Letter Queue
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при обработке сообщения JobId: {cashReceiptInputMessage.JobId}");
 
-            _logger.LogInformation($"Сообщение принято для обработки. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
+                // Обновляем статус Job на ValidationFailed
+                await _cashReceiptJobService.UpdateJobStatusAsync(
+                    cashReceiptInputMessage.JobId,
+                    CashReceiptJobStatus.ValidationFailed,
+                    $"Ошибка при обработке: {ex.Message}");
 
-            // Здесь будет основная логика обработки кассового чека
-            //_logger.LogInformation($"Получено задание на расчёт {externalPromoForecastCalculationJobMessage.JobId} с количеством задач: {externalPromoForecastCalculationJobMessage.Tasks.Count}");
+                throw;
+            }
         }
     }
 }

@@ -55,5 +55,10 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// Навигационное свойство к пользователю
         /// </summary>
         public virtual UserDao User { get; set; } = null!;
+
+        /// <summary>
+        /// Навигационное свойство: связи с кассовыми чеками
+        /// </summary>
+        public virtual ICollection<CustomerCashReceiptDao> CustomerCashReceipts { get; set; } = null!;
     }
 }

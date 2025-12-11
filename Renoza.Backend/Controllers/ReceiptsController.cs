@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Renoza.Backend.Models.Receipts;
+using Renoza.Domain.Entities.CashReceipts;
 using Renoza.Domain.Exceptions;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
+using System.Security.Claims;
 
 namespace Renoza.Backend.Controllers
 {
@@ -36,16 +38,33 @@ namespace Renoza.Backend.Controllers
         {
             try
             {
+                // Получаем ID пользователя из claims
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(new { message = "Пользователь не авторизован" });
+                }
+
+                var userId = Guid.Parse(userIdClaim);
+
                 // Получаем IP адрес клиента
                 var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
+                // Создаём входные данные для сервиса
+                var uploadInput = new UploadCashReceiptInput
+                {
+                    CustomerId = request.CustomerId,
+                    CreatedBy = userId,
+                    IpAddress = ipAddress,
+                    InputType = request.InputType,
+                    Data = request.Data,
+                    OrderId = request.OrderId,
+                    ContentType = request.ContentType,
+                    FileName = request.FileName
+                };
+
                 // Загружаем чек через сервис
-                var jobId = await _receiptService.UploadCashReceiptAsync(
-                    ipAddress,
-                    request.InputType,
-                    request.Data,
-                    request.ContentType,
-                    request.FileName);
+                var jobId = await _receiptService.UploadCashReceiptAsync(uploadInput);
 
                 return Ok(new UploadReceiptResponse
                 {

@@ -113,6 +113,31 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<PhoneVerificationDao, Guid>(context);
             });
+            services.AddScoped<IEntityWithIdRepository<CashReceiptDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CashReceiptDao, Guid>(context);
+            });
+            services.AddScoped<IEntityRepository<CustomerCashReceiptDao>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityRepository<CustomerCashReceiptDao>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CashReceiptJobDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CashReceiptJobDao, Guid>(context);
+            });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<CashReceiptJobStatusDao, short>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<CashReceiptJobStatusDao, short>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CashReceiptJobHistoryDao, long>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CashReceiptJobHistoryDao, long>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -193,6 +218,13 @@ namespace Renoza.Domain.DI
                     var cashReceiptBrokerOptions = configuration.GetRequiredConfigurationSection<CashReceiptBrokerOptions>("CashReceiptBrokerOptions");
                     services.Configure<CashReceiptBrokerOptions>(configuration.GetSection("CashReceiptBrokerOptions"));
                     services.AddSingleton(cashReceiptBrokerOptions);
+
+                    services.AddScoped<ICashReceiptJobService, CashReceiptJobService>();
+                    services.AddScoped<ICashReceiptService, CashReceiptService>();
+                    services.AddScoped<ICashReceiptPdfService, CashReceiptPdfService>();
+
+                    // Регистрируем HttpClient для OfdApiService
+                    services.AddHttpClient<IOfdApiService, OfdApiService>();
                 }
                 if (configuration.GetSection("QueueOptions").Exists())
                 {
@@ -201,6 +233,7 @@ namespace Renoza.Domain.DI
                     services.AddSingleton(queueOptions);
 
                     services.AddScoped<IReceiptService, ReceiptService>();
+                    services.AddScoped<ICashReceiptJobService, CashReceiptJobService>();
                 }
             }
             return services;

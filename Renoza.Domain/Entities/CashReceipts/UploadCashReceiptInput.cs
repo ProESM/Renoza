@@ -1,29 +1,35 @@
 using Renoza.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
 
-namespace Renoza.Backend.Models.Receipts
+namespace Renoza.Domain.Entities.CashReceipts
 {
     /// <summary>
-    /// Запрос на отправку кассового чека в очередь обработки
+    /// Входные данные для загрузки кассового чека
     /// </summary>
-    public class UploadCashReceiptRequest
+    public class UploadCashReceiptInput
     {
         /// <summary>
         /// Идентификатор заказчика
         /// </summary>
-        [Required(ErrorMessage = "Идентификатор заказчика обязателен")]
         public Guid CustomerId { get; set; }
+
+        /// <summary>
+        /// Идентификатор пользователя, создавшего запрос
+        /// </summary>
+        public Guid CreatedBy { get; set; }
+
+        /// <summary>
+        /// IP адрес клиента
+        /// </summary>
+        public string IpAddress { get; set; } = string.Empty;
 
         /// <summary>
         /// Тип входных данных
         /// </summary>
-        [Required(ErrorMessage = "Тип входных данных обязателен")]
         public ReceiptInputType InputType { get; set; }
 
         /// <summary>
-        /// Данные чека (QR код, base64 изображения и т.д.)
+        /// Данные чека (QR код, JSON, изображение в base64 и т.д.)
         /// </summary>
-        [Required(ErrorMessage = "Данные чека обязательны")]
         public string Data { get; set; } = string.Empty;
 
         /// <summary>
@@ -32,7 +38,7 @@ namespace Renoza.Backend.Models.Receipts
         public Guid? OrderId { get; set; }
 
         /// <summary>
-        /// MIME тип файла (для изображений и PDF)
+        /// MIME тип файла (опционально)
         /// </summary>
         public string? ContentType { get; set; }
 
