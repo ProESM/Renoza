@@ -76,25 +76,28 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         public async Task<Result<User>> RegisterUserAsync(string name, string displayName, string email, string phoneNumber, string phoneCountryCode, string password)
         {
             // Проверяем уникальность имени пользователя
-            var existingUser = await _userRepository.GetQueryable()
-                .FirstOrDefaultAsync(u => u.Name == name);
-            if (existingUser != null)
+            var nameExists = await _userRepository.GetQueryable()
+                .AsNoTracking()
+                .AnyAsync(u => u.Name == name);
+            if (nameExists)
             {
                 return Result<User>.Failure("Пользователь с таким именем уже существует");
             }
 
             // Проверяем уникальность email
-            existingUser = await _userRepository.GetQueryable()
-                .FirstOrDefaultAsync(u => u.Email == email);
-            if (existingUser != null)
+            var emailExists = await _userRepository.GetQueryable()
+                .AsNoTracking()
+                .AnyAsync(u => u.Email == email);
+            if (emailExists)
             {
                 return Result<User>.Failure("Пользователь с таким email уже существует");
             }
 
             // Проверяем уникальность телефона
-            existingUser = await _userRepository.GetQueryable()
-                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber && u.PhoneCountryCode == phoneCountryCode);
-            if (existingUser != null)
+            var phoneExists = await _userRepository.GetQueryable()
+                .AsNoTracking()
+                .AnyAsync(u => u.PhoneNumber == phoneNumber && u.PhoneCountryCode == phoneCountryCode);
+            if (phoneExists)
             {
                 return Result<User>.Failure("Пользователь с таким номером телефона уже существует");
             }

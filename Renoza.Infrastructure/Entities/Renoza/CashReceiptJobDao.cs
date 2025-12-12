@@ -46,12 +46,6 @@ namespace Renoza.Infrastructure.Entities.Renoza
         public string QrSource { get; set; } = string.Empty;
 
         /// <summary>
-        /// Нормализованный QR-код для поиска дубликатов
-        /// </summary>
-        [MaxLength(256)]
-        public string NormalizedQrSource { get; set; } = string.Empty;
-
-        /// <summary>
         /// IP адрес пользователя
         /// </summary>
         [MaxLength(50)]

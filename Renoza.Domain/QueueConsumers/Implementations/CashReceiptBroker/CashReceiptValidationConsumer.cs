@@ -48,34 +48,35 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
 
                 if (existingJobResult.IsSuccess && existingJobResult.Data != null)
                 {
-                    var existingJobData = existingJobResult.Data;
+                    var existingReceipt = existingJobResult.Data;
 
-                    _logger.LogInformation($"JobId: {message.JobId}: Найден ранее обработанный чек с тем же QR кодом (JobId: {existingJobData.JobId}). Пропускаем обращение к OFD API.");
+                    _logger.LogInformation($"JobId: {message.JobId}: Найден ранее обработанный чек с тем же QR кодом (CashReceiptId: {existingReceipt.CashReceiptId}). Пропускаем обращение к OFD API.");
 
                     // Обновляем статус на Recognized
                     await _cashReceiptJobService.UpdateJobStatusAsync(
                         message.JobId,
                         CashReceiptJobStatus.Recognized,
-                        $"Используем данные ранее обработанного чека (JobId: {existingJobData.JobId})");
+                        $"Используем данные ранее обработанного чека (CashReceiptId: {existingReceipt.CashReceiptId})");
 
                     // Обновляем статус на Saving
                     await _cashReceiptJobService.UpdateJobStatusAsync(
                         message.JobId,
                         CashReceiptJobStatus.Saving,
-                        "Сохранение распознанного чека в БД");
+                        "Привязка к существующему чеку");
 
-                    // Отправляем сообщение напрямую на сохранение, используя JSON данные из существующего чека
+                    // Отправляем сообщение на сохранение со ссылкой на существующий чек
                     var saveMessage = new CashReceiptSaveMessage
                     {
                         JobId = message.JobId,
-                        ReceiptJson = existingJobData.ReceiptJsonData,
-                        ExistingJobId = existingJobData.JobId
+                        ReceiptJson = existingReceipt.ReceiptJsonData,
+                        CashReceiptId = existingReceipt.CashReceiptId,
+                        PdfUrl = existingReceipt.PdfUrl
                     };
 
                     var saveEndpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptSaveConsumerQueueName}"));
                     await saveEndpoint.Send(saveMessage);
 
-                    _logger.LogInformation($"JobId: {message.JobId}: Переиспользованы данные из Job {existingJobData.JobId}. Отправлено на сохранение.");
+                    _logger.LogInformation($"JobId: {message.JobId}: Переиспользован существующий чек {existingReceipt.CashReceiptId}. Отправлено на сохранение.");
 
                     return;
                 }

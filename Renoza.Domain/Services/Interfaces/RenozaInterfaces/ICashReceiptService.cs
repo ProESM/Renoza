@@ -1,5 +1,5 @@
 ﻿using Renoza.Common.Helpers;
-using Renoza.Domain.Enums;
+using Renoza.Domain.Entities.CashReceipts;
 
 namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
 {
@@ -11,19 +11,8 @@ namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
         /// <summary>
         /// Сохранить кассовый чек
         /// </summary>
-        /// <param name="jobId">Идентификатор задания</param>
-        /// <param name="inputType">Тип входных данных</param>
-        /// <param name="data">Данные чека</param>
-        /// <param name="contentType">MIME тип файла (опционально)</param>
-        /// <param name="fileName">Имя файла (опционально)</param>
-        /// <param name="existingJobId">Идентификатор ранее обработанного задания (опционально)</param>
+        /// <param name="input">Входные данные для сохранения чека</param>
         /// <param name="cancellationToken">Токен отмены</param>
-        Task<Result<bool>> SaveCashReceiptAsync(Guid jobId,
-            ReceiptInputType inputType,
-            string data,
-            string? contentType = null,
-            string? fileName = null,
-            Guid? existingJobId = null,
-            CancellationToken cancellationToken = default);
+        Task<Result<bool>> SaveCashReceiptAsync(SaveCashReceiptInput input, CancellationToken cancellationToken = default);
     }
 }

@@ -31,13 +31,23 @@ namespace Renoza.Backend.Controllers
         /// <param name="request">Данные кассового чека</param>
         /// <returns>Информация о принятии чека в обработку</returns>
         [HttpPost("cash-receipt")]
-        [ProducesResponseType(typeof(UploadReceiptResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UploadCashReceiptResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<IActionResult> UploadCashReceipt([FromBody] UploadCashReceiptRequest request)
         {
             try
             {
+                // Валидация: хотя бы одно должно быть заполнено
+                if (request.File == null && string.IsNullOrEmpty(request.Data))
+                {
+                    return BadRequest(new
+                    {
+                        error = "Должен быть указан файл или JSON данные",
+                        code = "VALIDATION_ERROR"
+                    });
+                }
+
                 // Получаем ID пользователя из claims
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userIdClaim))
@@ -53,20 +63,19 @@ namespace Renoza.Backend.Controllers
                 // Создаём входные данные для сервиса
                 var uploadInput = new UploadCashReceiptInput
                 {
-                    CustomerId = request.CustomerId,
                     CreatedBy = userId,
                     IpAddress = ipAddress,
-                    InputType = request.InputType,
                     Data = request.Data,
-                    OrderId = request.OrderId,
-                    ContentType = request.ContentType,
-                    FileName = request.FileName
+                    FileStream = request.File?.OpenReadStream(),
+                    FileName = request.File?.FileName,
+                    FileContentType = request.File?.ContentType,
+                    Metadata = request.Metadata
                 };
 
                 // Загружаем чек через сервис
                 var jobId = await _receiptService.UploadCashReceiptAsync(uploadInput);
 
-                return Ok(new UploadReceiptResponse
+                return Ok(new UploadCashReceiptResponse
                 {
                     JobId = jobId,
                     Message = "Кассовый чек принят в обработку",

@@ -35,6 +35,7 @@ namespace Renoza.Backend.Controllers
             try
             {
                 var profiles = await _customerProfileService.GetQueryable()
+                    .AsNoTracking()
                     .Where(p => p.IsActive)
                     .OrderByDescending(p => p.CreatedAt)
                     .ToListAsync();

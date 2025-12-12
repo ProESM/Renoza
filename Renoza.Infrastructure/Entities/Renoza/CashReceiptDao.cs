@@ -15,6 +15,12 @@ namespace Renoza.Infrastructure.Entities.Renoza
         public string QrCode { get; set; } = string.Empty;
 
         /// <summary>
+        /// Нормализованный QR-код для поиска дубликатов (уникальный)
+        /// </summary>
+        [MaxLength(256)]
+        public string NormalizedQrSource { get; set; } = string.Empty;
+
+        /// <summary>
         /// Полные данные чека в формате JSON
         /// </summary>
         public string? JsonData { get; set; } = string.Empty;

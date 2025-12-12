@@ -3,7 +3,7 @@ namespace Renoza.Backend.Models.Receipts
     /// <summary>
     /// Ответ на отправку чека в очередь
     /// </summary>
-    public class UploadReceiptResponse
+    public class UploadCashReceiptResponse
     {
         /// <summary>
         /// Идентификатор задания на обработку

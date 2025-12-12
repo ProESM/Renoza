@@ -78,14 +78,6 @@ namespace Renoza.Domain.Entities.CashReceipts
         public string QrSource { get; set; } = string.Empty;
 
         /// <summary>
-        /// Нормализованный QR-код для поиска дубликатов
-        /// </summary>
-        [Display(Name = "Нормализованный QR-код")]
-        [DataMember]
-        [JsonProperty(PropertyName = "NormalizedQrSource")]
-        public string NormalizedQrSource { get; set; } = string.Empty;
-
-        /// <summary>
         /// Дата и время создания
         /// </summary>
         [Display(Name = "Дата создания")]

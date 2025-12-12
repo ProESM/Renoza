@@ -1,9 +1,12 @@
 ﻿using MassTransit;
+using Microsoft.Extensions.Logging;
 using Renoza.Domain.QueueConsumers.Interfaces;
+using Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker;
 using System.Reflection;
 using Newtonsoft.Json;
 using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Options;
+using Renoza.Domain.Extensions;
 
 namespace Renoza.CashReceiptBroker.Configuration
 {
@@ -59,6 +62,9 @@ namespace Renoza.CashReceiptBroker.Configuration
                     });
 
                     var cashReceiptBrokerOptions = context.GetRequiredService<CashReceiptBrokerOptions>();
+                    var massTransitRetryOptions = context.GetRequiredService<MassTransitRetryOptions>();
+                    var loggerFactory = context.GetRequiredService<ILoggerFactory>();
+                    var logger = loggerFactory.CreateLogger("MassTransitRetry");
 
                     var cashReceiptBrokerProperties = cashReceiptBrokerOptions.GetPropertiesDictionary();
 
@@ -75,23 +81,59 @@ namespace Renoza.CashReceiptBroker.Configuration
                             }
                         }
 
-                        switch (consumer.Name)
+                        // Определяем retry настройки для каждого типа consumer
+                        ConsumerRetrySettings? retrySettings = consumer.Name switch
                         {
-                            //case nameof(PrepareScenarioForLoadOutConsumer):
-                            //    cfg.ReceiveEndpoint(queueName, e =>
-                            //    {
-                            //        e.ConfigureConsumer(context, consumer);
-                            //        e.PrefetchCount = 1;
-                            //    });
-                            //    break;
-                            //case nameof(RecreateScenarioPartitionsConsumer):
-                            default:
-                                cfg.ReceiveEndpoint(queueName, e =>
+                            "CashReceiptValidationConsumer" => massTransitRetryOptions.Validation,
+                            "CashReceiptRecognitionConsumer" => massTransitRetryOptions.Recognition,
+                            "CashReceiptSaveConsumer" => massTransitRetryOptions.Save,
+                            "CashReceiptInputConsumer" => massTransitRetryOptions.Input,
+                            _ => null
+                        };
+
+                        cfg.ReceiveEndpoint(queueName, e =>
+                        {
+                            e.ConfigureConsumer(context, consumer);
+
+                            // Применяем retry политики, если они определены для этого consumer
+                            if (retrySettings != null)
+                            {
+                                e.UseMessageRetry(retry =>
                                 {
-                                    e.ConfigureConsumer(context, consumer);
+                                    if (retrySettings.UseExponentialBackoff)
+                                    {
+                                        retry.Exponential(
+                                            retrySettings.RetryLimit,
+                                            TimeSpan.FromSeconds(retrySettings.InitialIntervalSeconds),
+                                            TimeSpan.FromMinutes(1),
+                                            TimeSpan.FromMilliseconds(100));
+                                    }
+                                    else
+                                    {
+                                        retry.Incremental(
+                                            retrySettings.RetryLimit,
+                                            TimeSpan.FromSeconds(retrySettings.InitialIntervalSeconds),
+                                            TimeSpan.FromSeconds(retrySettings.IntervalIncrementSeconds));
+                                    }
+
+                                    retry.Ignore<ArgumentException>();
+                                    retry.Ignore<InvalidOperationException>();
+
+                                    retry.Handle<Exception>(ex =>
+                                    {
+                                        logger.LogWarning(
+                                            "🔄 {ConsumerName} обрабатывает ошибку для Retry. Ошибка: {ErrorType}: {ErrorMessage}",
+                                            consumer.Name,
+                                            ex.GetType().Name,
+                                            ex.Message);
+                                        return true;
+                                    });
                                 });
-                                break;
-                        }
+
+                                // InMemoryOutbox для идемпотентности
+                                e.UseInMemoryOutbox(context);
+                            }
+                        });
                     }
 
                     //// Объявление очереди
@@ -106,6 +148,7 @@ namespace Renoza.CashReceiptBroker.Configuration
                     //});
                 });
 
+                // Регистрируем все consumers (без retry настроек на этом этапе)
                 foreach (var consumer in consumers)
                 {
                     config.AddConsumers(consumer);

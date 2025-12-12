@@ -1,7 +1,6 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Renoza.Domain.Entities.CashReceipts.OfdApi;
+using Renoza.Domain.Entities.CashReceipts;
 using Renoza.Domain.Enums;
 using Renoza.Domain.Messages.CashReceipt;
 using Renoza.Domain.Options;
@@ -50,10 +49,29 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
             try
             {
                 // Сохранение чека
-                 var result = await _cashReceiptService.SaveCashReceiptAsync(message.JobId, ReceiptInputType.QrCode, 
-                     message.ReceiptJson, existingJobId: message.ExistingJobId);
+                var input = new SaveCashReceiptInput
+                {
+                    JobId = message.JobId,
+                    InputType = ReceiptInputType.QrCode,
+                    Data = message.ReceiptJson,
+                    CashReceiptId = message.CashReceiptId,
+                    PdfUrl = message.PdfUrl
+                };
 
-                // Временная заглушка
+                var result = await _cashReceiptService.SaveCashReceiptAsync(input);
+
+                if (!result.IsSuccess)
+                {
+                    _logger.LogError($"JobId: {message.JobId}: Ошибка при сохранении чека: {result.ErrorMessage}");
+
+                    await _cashReceiptJobService.UpdateJobStatusAsync(
+                        message.JobId,
+                        CashReceiptJobStatus.SaveFailed,
+                        $"Ошибка сохранения: {result.ErrorMessage}");
+
+                    return;
+                }
+
                 _logger.LogInformation($"JobId: {message.JobId}: Чек успешно сохранен в БД.");
 
                 // Обновляем статус на Completed

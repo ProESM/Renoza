@@ -34,6 +34,7 @@ namespace Renoza.Backend.Controllers
             try
             {
                 var roles = await _roleService.GetQueryable()
+                    .AsNoTracking()
                     .Where(r => r.IsActive)
                     .OrderBy(r => r.Name)
                     .ToListAsync();

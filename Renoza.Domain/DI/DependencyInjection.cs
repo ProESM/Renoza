@@ -4,9 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Microsoft.Extensions.Http.Resilience;
 using Renoza.Domain.Extensions;
 using Renoza.Domain.Mappings;
 using Renoza.Domain.Options;
+using Renoza.Domain.Policies;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Implementations.RenozaImplementations;
 using Renoza.Domain.Services.Interfaces.BaseInterfaces;
@@ -219,12 +223,25 @@ namespace Renoza.Domain.DI
                     services.Configure<CashReceiptBrokerOptions>(configuration.GetSection("CashReceiptBrokerOptions"));
                     services.AddSingleton(cashReceiptBrokerOptions);
 
+                    // Регистрируем настройки устойчивости OFD API
+                    var ofdResilienceOptions = configuration.GetSection("OfdApiResilience").Exists()
+                        ? configuration.GetRequiredConfigurationSection<OfdApiResilienceOptions>("OfdApiResilience")
+                        : new OfdApiResilienceOptions(); // Значения по умолчанию, если секция отсутствует
+                    services.Configure<OfdApiResilienceOptions>(configuration.GetSection("OfdApiResilience"));
+                    services.AddSingleton(ofdResilienceOptions);
+
                     services.AddScoped<ICashReceiptJobService, CashReceiptJobService>();
                     services.AddScoped<ICashReceiptService, CashReceiptService>();
                     services.AddScoped<ICashReceiptPdfService, CashReceiptPdfService>();
 
-                    // Регистрируем HttpClient для OfdApiService
-                    services.AddHttpClient<IOfdApiService, OfdApiService>();
+                    // Регистрируем HttpClient для OfdApiService с политиками Polly v8
+                    services.AddHttpClient<IOfdApiService, OfdApiService>()
+                        .AddHttpMessageHandler(serviceProvider =>
+                        {
+                            var logger = serviceProvider.GetRequiredService<ILogger<OfdApiService>>();
+                            var pipeline = OfdApiResiliencePolicies.CreateResiliencePipeline(ofdResilienceOptions, logger);
+                            return new ResilienceHandler(pipeline);
+                        });
                 }
                 if (configuration.GetSection("QueueOptions").Exists())
                 {
@@ -235,6 +252,13 @@ namespace Renoza.Domain.DI
                     services.AddScoped<IReceiptService, ReceiptService>();
                     services.AddScoped<ICashReceiptJobService, CashReceiptJobService>();
                 }
+
+                // Регистрируем настройки Retry для MassTransit Consumers
+                var massTransitRetryOptions = configuration.GetSection("MassTransitRetry").Exists()
+                    ? configuration.GetRequiredConfigurationSection<MassTransitRetryOptions>("MassTransitRetry")
+                    : new MassTransitRetryOptions(); // Значения по умолчанию, если секция отсутствует
+                services.Configure<MassTransitRetryOptions>(configuration.GetSection("MassTransitRetry"));
+                services.AddSingleton(massTransitRetryOptions);
             }
             return services;
         }

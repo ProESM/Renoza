@@ -51,16 +51,33 @@ namespace Renoza.DbMigration.Migration
                     .InSchema("public")
                     .WithColumn("Id").AsGuid().PrimaryKey()
                     .WithColumn("QrCode").AsString(256).NotNullable()
+                    .WithColumn("NormalizedQrSource").AsString(256).NotNullable()
                     .WithColumn("JsonData").AsCustom("text").Nullable()
                     .WithColumn("PdfUrl").AsString(500).Nullable()
                     .WithColumn("TotalAmount").AsDecimal().Nullable()
                     .WithColumn("DocumentDateTime").AsCustom("timestamp with time zone").Nullable()
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
+                // UNIQUE индекс для предотвращения дубликатов чеков
+                Create.Index("UQ_CashReceipts_NormalizedQrSource")
+                    .OnTable("CashReceipts")
+                    .InSchema("public")
+                    .OnColumn("NormalizedQrSource")
+                    .Ascending()
+                    .WithOptions()
+                    .Unique();
+
                 Create.Index("IDX_CashReceipts_QrCode")
                     .OnTable("CashReceipts")
                     .InSchema("public")
                     .OnColumn("QrCode");
+
+                // Индекс для аналитики и отчётов по дате создания
+                Create.Index("IDX_CashReceipts_CreatedAt")
+                    .OnTable("CashReceipts")
+                    .InSchema("public")
+                    .OnColumn("CreatedAt")
+                    .Descending();
             }
 
             // Таблица запросов на загрузку чеков
@@ -75,7 +92,6 @@ namespace Renoza.DbMigration.Migration
                     .WithColumn("StatusId").AsInt16().NotNullable().ForeignKey("FK_CashReceiptJobs_StatusId", "public", "CashReceiptJobStatuses", "Id").OnDelete(Rule.None)
                     .WithColumn("StatusComment").AsString(2000).Nullable()
                     .WithColumn("QrSource").AsString(256).NotNullable()
-                    .WithColumn("NormalizedQrSource").AsString(256).NotNullable()
                     .WithColumn("IpAddress").AsString(50).NotNullable()
                     .WithColumn("CashReceiptId").AsGuid().Nullable().ForeignKey("FK_CashReceiptJobs_CashReceiptId", "public", "CashReceipts", "Id").OnDelete(Rule.Cascade)
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
@@ -102,22 +118,17 @@ namespace Renoza.DbMigration.Migration
                     .InSchema("public")
                     .OnColumn("OrderId");
 
-                Create.Index("IDX_CashReceiptJobs_NormalizedQrSource")
-                    .OnTable("CashReceiptJobs")
-                    .InSchema("public")
-                    .OnColumn("NormalizedQrSource");
-
-                Create.Index("IDX_CashReceiptJobs_NormalizedQr_Status_Completed")
-                    .OnTable("CashReceiptJobs")
-                    .InSchema("public")
-                    .OnColumn("NormalizedQrSource").Ascending()
-                    .OnColumn("StatusId").Ascending()
-                    .OnColumn("CompletedAt").Descending();
-
                 Create.Index("IDX_CashReceiptJobs_CashReceiptId")
                     .OnTable("CashReceiptJobs")
                     .InSchema("public")
                     .OnColumn("CashReceiptId");
+
+                // Составной индекс для получения последних чеков клиента (КРИТИЧНЫЙ)
+                Create.Index("IDX_CashReceiptJobs_CustomerId_CreatedAt")
+                    .OnTable("CashReceiptJobs")
+                    .InSchema("public")
+                    .OnColumn("CustomerId").Ascending()
+                    .OnColumn("CreatedAt").Descending();
             }
 
             // Таблица истории изменений статусов запросов
@@ -140,6 +151,13 @@ namespace Renoza.DbMigration.Migration
                     .OnTable("CashReceiptJobHistory")
                     .InSchema("public")
                     .OnColumn("StatusId");
+
+                // Составной индекс для получения истории Job отсортированной по дате (ВАЖНЫЙ)
+                Create.Index("IDX_CashReceiptJobHistory_JobId_CreatedAt")
+                    .OnTable("CashReceiptJobHistory")
+                    .InSchema("public")
+                    .OnColumn("JobId").Ascending()
+                    .OnColumn("CreatedAt").Descending();
             }
 
             // Таблица связей заказчиков и кассовых чеков
@@ -196,6 +214,10 @@ namespace Renoza.DbMigration.Migration
             // Удаляем таблицу истории изменений статусов
             if (Schema.Schema("public").Table("CashReceiptJobHistory").Exists())
             {
+                if (Schema.Schema("public").Table("CashReceiptJobHistory").Index("IDX_CashReceiptJobHistory_JobId_CreatedAt").Exists())
+                {
+                    Delete.Index("IDX_CashReceiptJobHistory_JobId_CreatedAt").OnTable("CashReceiptJobHistory").InSchema("public");
+                }
                 if (Schema.Schema("public").Table("CashReceiptJobHistory").Index("IDX_CashReceiptJobHistory_JobId").Exists())
                 {
                     Delete.Index("IDX_CashReceiptJobHistory_JobId").OnTable("CashReceiptJobHistory").InSchema("public");
@@ -210,13 +232,13 @@ namespace Renoza.DbMigration.Migration
             // Удаляем таблицу запросов на загрузку чеков
             if (Schema.Schema("public").Table("CashReceiptJobs").Exists())
             {
-                if (Schema.Schema("public").Table("CashReceiptJobs").Index("IDX_CashReceiptJobs_NormalizedQr_Status_Completed").Exists())
+                if (Schema.Schema("public").Table("CashReceiptJobs").Index("IDX_CashReceiptJobs_CustomerId_CreatedAt").Exists())
                 {
-                    Delete.Index("IDX_CashReceiptJobs_NormalizedQr_Status_Completed").OnTable("CashReceiptJobs").InSchema("public");
+                    Delete.Index("IDX_CashReceiptJobs_CustomerId_CreatedAt").OnTable("CashReceiptJobs").InSchema("public");
                 }
-                if (Schema.Schema("public").Table("CashReceiptJobs").Index("IDX_CashReceiptJobs_NormalizedQrSource").Exists())
+                if (Schema.Schema("public").Table("CashReceiptJobs").Index("IDX_CashReceiptJobs_CashReceiptId").Exists())
                 {
-                    Delete.Index("IDX_CashReceiptJobs_NormalizedQrSource").OnTable("CashReceiptJobs").InSchema("public");
+                    Delete.Index("IDX_CashReceiptJobs_CashReceiptId").OnTable("CashReceiptJobs").InSchema("public");
                 }
                 if (Schema.Schema("public").Table("CashReceiptJobs").Index("IDX_CashReceiptJobs_CustomerId").Exists())
                 {
@@ -240,21 +262,17 @@ namespace Renoza.DbMigration.Migration
             // Удаляем таблицу кассовых чеков
             if (Schema.Schema("public").Table("CashReceipts").Exists())
             {
-                if (Schema.Schema("public").Table("CashReceipts").Index("IDX_CashReceipts_JobId").Exists())
+                if (Schema.Schema("public").Table("CashReceipts").Index("IDX_CashReceipts_CreatedAt").Exists())
                 {
-                    Delete.Index("IDX_CashReceipts_JobId").OnTable("CashReceipts").InSchema("public");
+                    Delete.Index("IDX_CashReceipts_CreatedAt").OnTable("CashReceipts").InSchema("public");
                 }
-                if (Schema.Schema("public").Table("CashReceipts").Index("IDX_CashReceipts_CustomerId").Exists())
+                if (Schema.Schema("public").Table("CashReceipts").Index("UQ_CashReceipts_NormalizedQrSource").Exists())
                 {
-                    Delete.Index("IDX_CashReceipts_CustomerId").OnTable("CashReceipts").InSchema("public");
+                    Delete.Index("UQ_CashReceipts_NormalizedQrSource").OnTable("CashReceipts").InSchema("public");
                 }
                 if (Schema.Schema("public").Table("CashReceipts").Index("IDX_CashReceipts_QrCode").Exists())
                 {
                     Delete.Index("IDX_CashReceipts_QrCode").OnTable("CashReceipts").InSchema("public");
-                }
-                if (Schema.Schema("public").Table("CashReceipts").Index("IDX_CashReceipts_OrderId").Exists())
-                {
-                    Delete.Index("IDX_CashReceipts_OrderId").OnTable("CashReceipts").InSchema("public");
                 }
                 Delete.Table("CashReceipts").InSchema("public");
             }

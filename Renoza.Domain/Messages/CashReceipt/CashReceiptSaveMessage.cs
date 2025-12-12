@@ -29,11 +29,19 @@ namespace Renoza.Domain.Messages.CashReceipt
         public string ReceiptJson { get; set; } = string.Empty;
 
         /// <summary>
-        /// Идентификатор ранее обработанного задания
+        /// Идентификатор существующего чека (если переиспользуем ранее обработанный)
         /// </summary>
-        [Display(Name = "Id ранее обработанного задания")]
+        [Display(Name = "Id существующего чека")]
         [DataMember]
-        [JsonProperty(PropertyName = "existing_job_id")]
-        public Guid? ExistingJobId { get; set; }
+        [JsonProperty(PropertyName = "cash_receipt_id")]
+        public Guid? CashReceiptId { get; set; }
+
+        /// <summary>
+        /// URL PDF файла чека в S3 (если используется существующий чек)
+        /// </summary>
+        [Display(Name = "URL PDF файла")]
+        [DataMember]
+        [JsonProperty(PropertyName = "pdf_url")]
+        public string? PdfUrl { get; set; }
     }
 }

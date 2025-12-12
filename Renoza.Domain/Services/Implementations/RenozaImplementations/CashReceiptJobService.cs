@@ -63,7 +63,6 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                     OrderId = input.OrderId,
                     StatusId = (short)CashReceiptJobStatus.Pending,
                     QrSource = input.QrSource,
-                    NormalizedQrSource = QrCodeNormalizer.Normalize(input.QrSource),
                     IpAddress = input.IpAddress,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -169,6 +168,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             try
             {
                 var jobDao = await _cashReceiptJobRepository.GetQueryable()
+                    .AsNoTracking()
                     .Include(x => x.Status)
                     .FirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
 
@@ -197,9 +197,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             try
             {
                 var historyDaoList = await _cashReceiptJobHistoryRepository.GetQueryable()
+                    .AsNoTracking()
                     .Include(x => x.Status)
                     .Where(x => x.JobId == jobId)
-                    .OrderBy(x => x.CreatedAt)
+                    .OrderByDescending(x => x.CreatedAt)
                     .ToListAsync(cancellationToken);
 
                 var history = _mapper.Map<List<CashReceiptJobHistory>>(historyDaoList);
@@ -234,7 +235,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Найти успешно завершенное задание по QR коду
+        /// Найти успешно обработанный чек по QR коду
         /// </summary>
         public async Task<Result<CompletedCashReceiptJobResult?>> FindCompletedJobByQrAsync(
             string qrSource,
@@ -244,43 +245,31 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             {
                 var normalizedQr = QrCodeNormalizer.Normalize(qrSource);
 
-                var jobDao = await _cashReceiptJobRepository.GetQueryable()
-                    .Include(x => x.CashReceipt)
-                    .Where(x => x.NormalizedQrSource == normalizedQr &&
-                                x.StatusId == (short)CashReceiptJobStatus.Completed &&
-                                x.CashReceipt != null)
-                    .OrderByDescending(x => x.CompletedAt)
+                // Ищем чек напрямую в таблице CashReceipts по нормализованному QR коду
+                var receiptDao = await _cashReceiptRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(x => x.NormalizedQrSource == normalizedQr)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                //var query = from cr in _cashReceiptRepository.GetQueryable()
-                //            join crj in _cashReceiptJobRepository.GetQueryable()
-                //                on cr.JobId equals crj.Id
-                //            where crj.NormalizedQrSource == normalizedQr
-                //                  && crj.StatusId == (short)CashReceiptJobStatus.Completed
-                //            select crj;
-
-                //var jobDao = await query.OrderByDescending(x => x.CompletedAt)
-                //    .Include(x => x.CashReceipt)
-                //    .FirstOrDefaultAsync(cancellationToken);
-
-                if (jobDao == null)
+                if (receiptDao == null)
                 {
                     return Result<CompletedCashReceiptJobResult?>.Success(null);
                 }
 
-                // Возвращаем JobId и JSON данные чека
+                // Возвращаем CashReceiptId, JSON данные чека и PDF URL
                 var result = new CompletedCashReceiptJobResult
                 {
-                    JobId = jobDao.Id,
-                    ReceiptJsonData = jobDao.CashReceipt?.JsonData ?? string.Empty
+                    CashReceiptId = receiptDao.Id,
+                    ReceiptJsonData = receiptDao.JsonData ?? string.Empty,
+                    PdfUrl = receiptDao.PdfUrl
                 };
 
                 return Result<CompletedCashReceiptJobResult?>.Success(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка при поиске завершенного задания по QR коду: {ex.Message}");
-                return Result<CompletedCashReceiptJobResult?>.Failure($"Ошибка при поиске задания: {ex.Message}");
+                _logger.LogError(ex, $"Ошибка при поиске обработанного чека по QR коду: {ex.Message}");
+                return Result<CompletedCashReceiptJobResult?>.Failure($"Ошибка при поиске чека: {ex.Message}");
             }
         }
     }

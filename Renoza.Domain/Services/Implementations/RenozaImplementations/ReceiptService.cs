@@ -83,11 +83,11 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             // Создаём Job в БД
             var createJobInput = new CreateCashReceiptJobInput
             {
-                CustomerId = input.CustomerId,
+                CustomerId = input.Metadata.CustomerId,
                 CreatedBy = input.CreatedBy,
                 QrSource = input.Data,
                 IpAddress = input.IpAddress,
-                OrderId = input.OrderId
+                OrderId = input.Metadata.OrderId
             };
 
             var jobResult = await _cashReceiptJobService.CreateJobAsync(createJobInput, cancellationToken);
@@ -112,7 +112,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             await endpoint.Send(message, cancellationToken);
 
             _logger.LogInformation("Кассовый чек отправлен в очередь. JobId: {JobId}, IP: {IpAddress}, InputType: {InputType}",
-                jobId, input.IpAddress, input.InputType);
+                jobId, input.IpAddress, input.Metadata.InputType);
 
             return jobId;
         }

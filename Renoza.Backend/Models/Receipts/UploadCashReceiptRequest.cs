@@ -1,5 +1,5 @@
-using Renoza.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
+using Renoza.Domain.Entities.CashReceipts;
 
 namespace Renoza.Backend.Models.Receipts
 {
@@ -9,36 +9,19 @@ namespace Renoza.Backend.Models.Receipts
     public class UploadCashReceiptRequest
     {
         /// <summary>
-        /// Идентификатор заказчика
-        /// </summary>
-        [Required(ErrorMessage = "Идентификатор заказчика обязателен")]
-        public Guid CustomerId { get; set; }
-
-        /// <summary>
-        /// Тип входных данных
-        /// </summary>
-        [Required(ErrorMessage = "Тип входных данных обязателен")]
-        public ReceiptInputType InputType { get; set; }
-
-        /// <summary>
         /// Данные чека (QR код, base64 изображения и т.д.)
         /// </summary>
-        [Required(ErrorMessage = "Данные чека обязательны")]
         public string Data { get; set; } = string.Empty;
 
         /// <summary>
-        /// Идентификатор заказа (опционально)
+        /// Файл чека (опционально, но если нет файла, должен быть Data)
         /// </summary>
-        public Guid? OrderId { get; set; }
+        public IFormFile? File { get; set; }
 
         /// <summary>
-        /// MIME тип файла (для изображений и PDF)
+        /// Дополнительные метаданные кассового чека
         /// </summary>
-        public string? ContentType { get; set; }
-
-        /// <summary>
-        /// Имя файла (опционально)
-        /// </summary>
-        public string? FileName { get; set; }
+        [Required(ErrorMessage = "Дополнительные метаданные обязательны")]
+        public CashReceiptMetadata Metadata { get; set; } = null!;
     }
 }

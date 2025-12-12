@@ -36,6 +36,7 @@ namespace Renoza.Backend.Controllers
             try
             {
                 var query = _workerProfileService.GetQueryable()
+                    .AsNoTracking()
                     .Where(p => p.IsActive);
 
                 if (isAvailable.HasValue)

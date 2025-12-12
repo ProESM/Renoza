@@ -72,11 +72,13 @@ namespace Renoza.Backend.Controllers
                     }
                     // Поиск по номеру телефона (формат: +7XXXXXXXXXX)
                     user = await _userService.GetQueryable()
+                        .AsNoTracking()
                         .FirstOrDefaultAsync(u => (u.PhoneCountryCode + u.PhoneNumber) == username);
                 }
                 else
                 {
                     user = await _userService.GetQueryable()
+                        .AsNoTracking()
                         .FirstOrDefaultAsync(u => u.Email == username || u.Name == username);
                 }
 
@@ -142,6 +144,7 @@ namespace Renoza.Backend.Controllers
                 }
 
                 var user = await _userService.GetQueryable()
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == userId);
 
                 if (user == null)

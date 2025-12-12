@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Renoza.Common.Helpers;
+using Renoza.Domain.Entities.CashReceipts;
 using Renoza.Domain.Entities.CashReceipts.OfdApi;
 using Renoza.Domain.Enums;
+using Renoza.Domain.Helpers;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
 using Renoza.Infrastructure.Contexts;
@@ -76,20 +78,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сохранить кассовый чек
         /// </summary>
-        /// <param name="jobId">Идентификатор задания</param>
-        /// <param name="inputType">Тип входных данных</param>
-        /// <param name="data">Данные чека</param>
-        /// <param name="contentType">MIME тип файла (опционально)</param>
-        /// <param name="fileName">Имя файла (опционально)</param>
-        /// <param name="existingJobId">Идентификатор ранее обработанного задания (опционально)</param>
+        /// <param name="input">Входные данные для сохранения чека</param>
         /// <param name="cancellationToken">Токен отмены</param>
-        public async Task<Result<bool>> SaveCashReceiptAsync(Guid jobId, ReceiptInputType inputType, string data, string? contentType = null, 
-            string? fileName = null, Guid? existingJobId = null, CancellationToken cancellationToken = default)
+        public async Task<Result<bool>> SaveCashReceiptAsync(SaveCashReceiptInput input, CancellationToken cancellationToken = default)
         {
-            switch (inputType)
+            switch (input.InputType)
             {
                 case ReceiptInputType.QrCode:
-                    return await SaveCashReceiptByQrCodeAsync(jobId, data, existingJobId, cancellationToken);
+                    return await SaveCashReceiptByQrCodeAsync(input.JobId, input.Data, input.CashReceiptId, input.PdfUrl, cancellationToken);
                 //case ReceiptInputType.Photo:
                 //    break;
                 //case ReceiptInputType.ImageFile:
@@ -97,14 +93,12 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 //case ReceiptInputType.PdfFile:
                 //    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(inputType), inputType, null);
+                    throw new ArgumentOutOfRangeException(nameof(input.InputType), input.InputType, null);
             }
         }
 
-        private async Task<Result<bool>> SaveCashReceiptByQrCodeAsync(Guid jobId, string data, Guid? existingJobId = null, CancellationToken cancellationToken = default)
+        private async Task<Result<bool>> SaveCashReceiptByQrCodeAsync(Guid jobId, string data, Guid? cashReceiptId = null, string? pdfUrl = null, CancellationToken cancellationToken = default)
         {
-            Guid? existingCashReceiptId = null;
-
             // Получаем Job из БД для получения CustomerId
             var cashReceiptJobDao = await _cashReceiptJobRepository.GetByIdAsync(jobId, cancellationToken);
             if (cashReceiptJobDao == null)
@@ -122,31 +116,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             }
 
             // Генерируем PDF чека и сохраняем в S3
-            string? pdfS3Url = null;
+            string? pdfS3Url = pdfUrl; // Используем переданный PDF URL (если есть)
             try
             {
                 _logger.LogInformation($"JobId: {jobId}: Генерация PDF чека");
 
-                if (existingJobId != null)
+                // Если передан PDF URL от существующего чека, используем его
+                if (!string.IsNullOrWhiteSpace(pdfS3Url))
                 {
-                    var existingCashReceiptJobDao = await _cashReceiptJobRepository.GetQueryable()
-                        .Include(x => x.CashReceipt)
-                        .FirstOrDefaultAsync(x => x.Id == existingJobId.Value, cancellationToken);
-                    if (existingCashReceiptJobDao != null)
-                    {
-                        existingCashReceiptId = existingCashReceiptJobDao.CashReceiptId;
-
-                        pdfS3Url = existingCashReceiptJobDao.CashReceipt?.PdfUrl;
-
-                        if (!string.IsNullOrWhiteSpace(pdfS3Url))
-                        {
-                            _logger.LogInformation($"JobId: {jobId}: Взят PDF ранее обработанного чека");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogError($"Не удалось получить Job с Id: {existingJobId.Value}");
-                    }
+                    _logger.LogInformation($"JobId: {jobId}: Используется PDF ранее обработанного чека (CashReceiptId: {cashReceiptId})");
                 }
 
                 if (string.IsNullOrWhiteSpace(pdfS3Url))
@@ -177,7 +155,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
             try
             {
-                if (existingCashReceiptId == null)
+                // Если CashReceiptId не передан, создаем новый чек
+                if (cashReceiptId == null)
                 {
                     DateTime? documentDateTime = null;
 
@@ -189,11 +168,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                             receiptDateTime.Minute, receiptDateTime.Second, DateTimeKind.Utc);
                     }
 
-                    // сохранение данных по кассовому чеку
+                    // Вычисляем нормализованный QR код
+                    var normalizedQrSource = QrCodeNormalizer.Normalize(cashReceiptJobDao.QrSource);
+
+                    // Сохранение данных по кассовому чеку
                     var cashReceiptDao = new CashReceiptDao
                     {
                         Id = Guid.NewGuid(),
                         QrCode = cashReceiptJobDao.QrSource,
+                        NormalizedQrSource = normalizedQrSource,
                         JsonData = data,
                         PdfUrl = pdfS3Url,
                         TotalAmount = receiptData.Document?.Amount_Total / 100.0m,
@@ -203,37 +186,41 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
                     await _cashReceiptRepository.CreateAsync(cashReceiptDao, cancellationToken);
 
-                    existingCashReceiptId = cashReceiptDao.Id;
+                    cashReceiptId = cashReceiptDao.Id;
                 }
 
-                var customerCashReceiptDao = await _customerCashReceiptRepository.GetQueryable()
-                    .Where(x => x.CustomerId == customerId)
-                    .Where(x => x.CashReceiptId == existingCashReceiptId.Value)
-                    .FirstOrDefaultAsync(cancellationToken);
+                // Создаем или проверяем связь клиента с чеком
+                var exists = await _customerCashReceiptRepository.GetQueryable()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.CustomerId == customerId && x.CashReceiptId == cashReceiptId.Value,
+                              cancellationToken);
 
-                if (customerCashReceiptDao == null)
+                if (!exists)
                 {
-                    customerCashReceiptDao = new CustomerCashReceiptDao
+                    var customerCashReceiptDao = new CustomerCashReceiptDao
                     {
                         CustomerId = customerId,
-                        CashReceiptId = existingCashReceiptId.Value,
-                        OrderId = null,
+                        CashReceiptId = cashReceiptId.Value,
+                        OrderId = cashReceiptJobDao.OrderId,
                         CreatedAt = DateTime.UtcNow
                     };
 
                     await _customerCashReceiptRepository.CreateAsync(customerCashReceiptDao, cancellationToken);
                 }
 
-                cashReceiptJobDao.CashReceiptId = existingCashReceiptId;
+                // Привязываем Job к CashReceipt
+                cashReceiptJobDao.CashReceiptId = cashReceiptId.Value;
                 _cashReceiptJobRepository.Update(cashReceiptJobDao);
 
                 await SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation($"JobId: {jobId}: Чек успешно сохранен (CashReceiptId: {cashReceiptId.Value})");
 
                 return Result<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                _logger.LogError(ex, $"JobId: {jobId}: Ошибка при сохранении чека: {ex.Message}");
                 return Result<bool>.Failure(ex.Message);
             }
         }
