@@ -83,6 +83,9 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                         CashReceiptJobStatus.RecognitionFailed,
                         $"Ошибка от OFD API: {errorMessage}");
 
+                    // Очищаем temp хранилище (если были файлы)
+                    await _cashReceiptJobService.CleanupTempStorageAsync(message.JobId);
+
                     return;
                 }
 
@@ -123,6 +126,9 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                     message.JobId,
                     CashReceiptJobStatus.RecognitionFailed,
                     $"Ошибка распознавания: {ex.Message}");
+
+                // Очищаем temp хранилище (если были файлы)
+                await _cashReceiptJobService.CleanupTempStorageAsync(message.JobId);
 
                 throw;
             }

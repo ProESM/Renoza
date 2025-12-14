@@ -6,7 +6,10 @@ namespace Renoza.Domain.Helpers
     public static class QrCodeNormalizer
     {
         /// <summary>
-        /// Нормализует QR код для сравнения и поиска дубликатов
+        /// Нормализует QR код для сравнения и поиска дубликатов.
+        /// Парсит параметры QR кода и формирует каноническую строку с отсортированными параметрами.
+        /// Это гарантирует, что QR коды с одинаковыми данными, но разным порядком параметров,
+        /// будут иметь одинаковое нормализованное значение.
         /// </summary>
         /// <param name="qrSource">Исходный QR код</param>
         /// <returns>Нормализованный QR код</returns>
@@ -26,19 +29,73 @@ namespace Renoza.Domain.Helpers
             // 3. Удаляем все пробельные символы (пробелы, табуляции, переносы строк)
             normalized = new string(normalized.Where(c => !char.IsWhiteSpace(c)).ToArray());
 
-            // 4. Если это URL, нормализуем протокол (http/https не важен для содержимого чека)
-            if (normalized.StartsWith("http://"))
+            // 4. Если это URL, извлекаем query string параметры
+            if (normalized.StartsWith("http://") || normalized.StartsWith("https://"))
             {
-                normalized = "https://" + normalized.Substring(7);
+                var queryStart = normalized.IndexOf('?');
+                if (queryStart >= 0 && queryStart < normalized.Length - 1)
+                {
+                    normalized = normalized.Substring(queryStart + 1);
+                }
+                else
+                {
+                    // URL без параметров - возвращаем как есть после базовой нормализации
+                    return normalized.TrimEnd('/');
+                }
             }
 
-            // 5. Удаляем завершающий слеш в URL
-            if (normalized.EndsWith("/"))
+            // 5. Парсим параметры и сортируем их для канонической формы
+            // Формат: t=yyyyMMddTHHmm&s=сумма&fn=фн&i=фд&fp=фп&n=тип
+            var parameters = ParseParameters(normalized);
+            if (parameters.Count == 0)
             {
-                normalized = normalized.TrimEnd('/');
+                // Если не удалось распарсить параметры, возвращаем исходную нормализованную строку
+                return normalized;
             }
 
-            return normalized;
+            // 6. Сортируем параметры по ключу и формируем каноническую строку
+            var canonicalPairs = parameters
+                .OrderBy(kvp => kvp.Key)
+                .Select(kvp => $"{kvp.Key}={kvp.Value}");
+
+            return string.Join("&", canonicalPairs);
+        }
+
+        /// <summary>
+        /// Парсит строку параметров в словарь ключ-значение
+        /// </summary>
+        private static Dictionary<string, string> ParseParameters(string paramString)
+        {
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            if (string.IsNullOrWhiteSpace(paramString))
+            {
+                return parameters;
+            }
+
+            // Разбиваем по символу '&'
+            var pairs = paramString.Split('&', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var pair in pairs)
+            {
+                var parts = pair.Split('=', 2);
+                if (parts.Length == 2)
+                {
+                    var key = parts[0].Trim();
+                    var value = parts[1].Trim();
+
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        // Если ключ уже существует, берем первое значение (как в стандартных query strings)
+                        if (!parameters.ContainsKey(key))
+                        {
+                            parameters[key] = value;
+                        }
+                    }
+                }
+            }
+
+            return parameters;
         }
 
         /// <summary>

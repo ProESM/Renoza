@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Renoza.Domain.Enums;
 using Renoza.Domain.Messages.Base;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
@@ -19,6 +20,14 @@ namespace Renoza.Domain.Messages.CashReceipt
         [DataMember]
         [JsonProperty(PropertyName = "job_id")]
         public Guid JobId { get; set; }
+
+        /// <summary>
+        /// Тип входных данных чека
+        /// </summary>
+        [Display(Name = "Тип входных данных")]
+        [DataMember]
+        [JsonProperty(PropertyName = "input_type")]
+        public ReceiptInputType InputType { get; set; }
 
         /// <summary>
         /// Фискальный номер

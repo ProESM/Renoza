@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Polly;
 using Microsoft.Extensions.Http.Resilience;
 using Renoza.Domain.Extensions;
 using Renoza.Domain.Mappings;
@@ -148,6 +147,14 @@ namespace Renoza.Domain.DI
             services.AddAutoMapper(config =>
             {
                 config.AddMaps(typeof(UserMapperProfile).Assembly);
+
+                // Настраиваем лицензию для Lucky Penny AutoMapper Extensions
+                var autoMapperLicenseOptions = configuration.GetSection("AutoMapper").Get<AutoMapperOptions>();
+                if (!string.IsNullOrWhiteSpace(autoMapperLicenseOptions?.LicenseKey))
+                {
+                    // Устанавливаем license key
+                    config.LicenseKey = autoMapperLicenseOptions.LicenseKey;
+                }
             });
 
             // Регистрируем сервисы

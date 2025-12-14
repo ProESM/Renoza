@@ -157,8 +157,54 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
             var response = await _s3Client.ListObjectsV2Async(request, cancellationToken);
             return response.S3Objects != null
-                ? response.S3Objects.Select(o => o.Key).ToList() 
+                ? response.S3Objects.Select(o => o.Key).ToList()
                 : new List<string>();
+        }
+
+        /// <summary>
+        /// Переместить файл из одного места в другое (копирование + удаление исходного)
+        /// </summary>
+        public async Task<string> MoveFileAsync(string sourceKey, string destinationKey, CancellationToken cancellationToken = default)
+        {
+            // Копируем файл в новое место
+            await CopyFileAsync(sourceKey, destinationKey, cancellationToken);
+
+            // Удаляем исходный файл
+            await DeleteFileAsync(sourceKey, cancellationToken);
+
+            // Возвращаем URL нового местоположения
+            return GetPublicUrl(destinationKey);
+        }
+
+        /// <summary>
+        /// Удалить папку со всем содержимым
+        /// </summary>
+        public async Task DeleteFolderAsync(string folderKey, CancellationToken cancellationToken = default)
+        {
+            // Нормализуем ключ папки - убеждаемся, что он заканчивается на /
+            var normalizedFolderKey = folderKey.TrimEnd('/') + "/";
+
+            // Получаем список всех файлов в папке
+            var fileKeys = await ListFilesAsync(normalizedFolderKey, cancellationToken);
+
+            // Если файлов нет, выходим
+            if (fileKeys == null || fileKeys.Count == 0)
+            {
+                return;
+            }
+
+            // Удаляем все файлы в папке
+            // S3 поддерживает пакетное удаление до 1000 объектов за раз
+            foreach (var batch in fileKeys.Chunk(1000))
+            {
+                var deleteRequest = new DeleteObjectsRequest
+                {
+                    BucketName = _s3Options.BucketName,
+                    Objects = batch.Select(key => new KeyVersion { Key = key }).ToList()
+                };
+
+                await _s3Client.DeleteObjectsAsync(deleteRequest, cancellationToken);
+            }
         }
     }
 }

@@ -34,6 +34,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// Сервис для работы с заданиями на обработку чеков
         /// </summary>
         private readonly ICashReceiptJobService _cashReceiptJobService;
+        /// <summary>
+        /// Сервис для работы с S3 хранилищем
+        /// </summary>
+        private readonly IS3StorageService _s3StorageService;
 
         /// <summary>
         /// Сервис для работы с чеками
@@ -43,17 +47,20 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="queueOptions">Настройки очередей</param>
         /// <param name="rateLimitService">Сервис для проверки Rate Limiting</param>
         /// <param name="cashReceiptJobService">Сервис для работы с заданиями на обработку чеков</param>
+        /// <param name="s3StorageService">Сервис для работы с S3 хранилищем</param>
         public ReceiptService(IBus bus,
             ILogger<ReceiptService> logger,
             QueueOptions queueOptions,
             IRateLimitService rateLimitService,
-            ICashReceiptJobService cashReceiptJobService)
+            ICashReceiptJobService cashReceiptJobService,
+            IS3StorageService s3StorageService)
         {
             _bus = bus;
             _logger = logger;
             _queueOptions = queueOptions;
             _rateLimitService = rateLimitService;
             _cashReceiptJobService = cashReceiptJobService;
+            _s3StorageService = s3StorageService;
         }
 
         /// <summary>
@@ -99,12 +106,48 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
             var jobId = jobResult.Data;
 
+            // Загружаем файл в temp S3, если он есть
+            string? fileTempS3Url = null;
+            if (input.FileStream != null && !string.IsNullOrWhiteSpace(input.FileName))
+            {
+                try
+                {
+                    var tempFolder = $"temp/receipts/{jobId}";
+                    fileTempS3Url = await _s3StorageService.UploadFileAsync(
+                        input.FileStream,
+                        input.FileName,
+                        input.FileContentType ?? "application/octet-stream",
+                        tempFolder,
+                        cancellationToken);
+
+                    _logger.LogInformation("Файл загружен во временное хранилище S3. JobId: {JobId}, URL: {Url}",
+                        jobId, fileTempS3Url);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Ошибка при загрузке файла в S3 для JobId: {JobId}", jobId);
+
+                    // Обновляем статус Job на ValidationFailed (ошибка до начала обработки)
+                    await _cashReceiptJobService.UpdateJobStatusAsync(
+                        jobId,
+                        CashReceiptJobStatus.ValidationFailed,
+                        $"Ошибка при загрузке файла в S3: {ex.Message}",
+                        cancellationToken);
+
+                    throw new Exception($"Не удалось загрузить файл в S3: {ex.Message}", ex);
+                }
+            }
+
             // Создаём сообщение для отправки в очередь
             var message = new CashReceiptInputMessage
             {
                 IpAddress = input.IpAddress,
                 JobId = jobId,
-                QrSource = input.Data
+                InputType = input.Metadata.InputType,
+                Data = input.Data,
+                FileTempS3Url = fileTempS3Url,
+                FileName = input.FileName,
+                FileContentType = input.FileContentType
             };
 
             // Отправляем сообщение в очередь RabbitMQ

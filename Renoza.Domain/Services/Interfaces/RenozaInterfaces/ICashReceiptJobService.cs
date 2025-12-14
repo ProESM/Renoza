@@ -79,5 +79,14 @@ namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
         Task<Result<CompletedCashReceiptJobResult?>> FindCompletedJobByQrAsync(
             string qrSource,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Удалить временную папку чека в S3 при ошибке обработки
+        /// </summary>
+        /// <param name="jobId">Идентификатор запроса</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        Task CleanupTempStorageAsync(
+            Guid jobId,
+            CancellationToken cancellationToken = default);
     }
 }

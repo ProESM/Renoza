@@ -85,29 +85,59 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                         cashReceiptInputMessage.JobId,
                         $"Превышен rate limit для IP {cashReceiptInputMessage.IpAddress}");
 
+                    // Очищаем temp хранилище (если были файлы)
+                    await _cashReceiptJobService.CleanupTempStorageAsync(cashReceiptInputMessage.JobId);
+
                     // Отклоняем сообщение - оно попадёт в Dead Letter Queue
                     throw new RateLimitExceededException(cashReceiptInputMessage.IpAddress, rateLimitInfo.CurrentCount, rateLimitInfo.Limit);
                 }
 
-                _logger.LogInformation($"Сообщение принято для обработки. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}");
+                _logger.LogInformation($"Сообщение принято для обработки. IP: {cashReceiptInputMessage.IpAddress}, JobId: {cashReceiptInputMessage.JobId}, InputType: {cashReceiptInputMessage.InputType}");
 
-                // Обновляем статус на Validating
-                await _cashReceiptJobService.UpdateJobStatusAsync(
-                    cashReceiptInputMessage.JobId,
-                    CashReceiptJobStatus.Validating,
-                    "Начата валидация QR кода");
-
-                // Отправляем сообщение в очередь валидации
-                var validationMessage = new CashReceiptValidationMessage
+                // Роутинг по типу входных данных
+                if (cashReceiptInputMessage.InputType == ReceiptInputType.QrCode)
                 {
-                    JobId = cashReceiptInputMessage.JobId,
-                    QrSource = cashReceiptInputMessage.QrSource
-                };
+                    // QR-код: отправляем на валидацию
+                    await _cashReceiptJobService.UpdateJobStatusAsync(
+                        cashReceiptInputMessage.JobId,
+                        CashReceiptJobStatus.Validating,
+                        "Начата валидация QR кода");
 
-                var endpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptValidationConsumerQueueName}"));
-                await endpoint.Send(validationMessage);
+                    var validationMessage = new CashReceiptValidationMessage
+                    {
+                        JobId = cashReceiptInputMessage.JobId,
+                        InputType = cashReceiptInputMessage.InputType,
+                        QrSource = cashReceiptInputMessage.Data
+                    };
 
-                _logger.LogInformation($"JobId: {cashReceiptInputMessage.JobId}: Сообщение обработано, отправлено на валидацию.");
+                    var validationEndpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptValidationConsumerQueueName}"));
+                    await validationEndpoint.Send(validationMessage);
+
+                    _logger.LogInformation($"JobId: {cashReceiptInputMessage.JobId}: Сообщение обработано, отправлено на валидацию.");
+                }
+                else
+                {
+                    // Photo, ImageFile, PdfFile: пропускаем валидацию и распознавание, сразу сохраняем
+                    await _cashReceiptJobService.UpdateJobStatusAsync(
+                        cashReceiptInputMessage.JobId,
+                        CashReceiptJobStatus.Saving,
+                        "Начато сохранение введенных данных");
+
+                    var saveMessage = new CashReceiptSaveMessage
+                    {
+                        JobId = cashReceiptInputMessage.JobId,
+                        InputType = cashReceiptInputMessage.InputType,
+                        ReceiptJson = cashReceiptInputMessage.Data, // JSON с введенными вручную данными
+                        FileTempS3Url = cashReceiptInputMessage.FileTempS3Url,
+                        FileName = cashReceiptInputMessage.FileName,
+                        FileContentType = cashReceiptInputMessage.FileContentType
+                    };
+
+                    var saveEndpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptSaveConsumerQueueName}"));
+                    await saveEndpoint.Send(saveMessage);
+
+                    _logger.LogInformation($"JobId: {cashReceiptInputMessage.JobId}: Сообщение обработано, отправлено на сохранение (минуя валидацию и распознавание).");
+                }
             }
             catch (RateLimitExceededException)
             {
@@ -122,7 +152,10 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                 await _cashReceiptJobService.UpdateJobStatusAsync(
                     cashReceiptInputMessage.JobId,
                     CashReceiptJobStatus.ValidationFailed,
-                    $"Ошибка при обработке: {ex.Message}");
+                    $"Ошибка при обработке входного сообщения: {ex.Message}");
+
+                // Очищаем temp хранилище (если были файлы)
+                await _cashReceiptJobService.CleanupTempStorageAsync(cashReceiptInputMessage.JobId);
 
                 throw;
             }

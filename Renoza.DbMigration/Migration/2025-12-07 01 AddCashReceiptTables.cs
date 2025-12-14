@@ -53,7 +53,7 @@ namespace Renoza.DbMigration.Migration
                     .WithColumn("QrCode").AsString(256).NotNullable()
                     .WithColumn("NormalizedQrSource").AsString(256).NotNullable()
                     .WithColumn("JsonData").AsCustom("text").Nullable()
-                    .WithColumn("PdfUrl").AsString(500).Nullable()
+                    .WithColumn("FileUrl").AsString(500).Nullable()
                     .WithColumn("TotalAmount").AsDecimal().Nullable()
                     .WithColumn("DocumentDateTime").AsCustom("timestamp with time zone").Nullable()
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);

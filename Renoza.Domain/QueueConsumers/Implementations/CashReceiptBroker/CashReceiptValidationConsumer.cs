@@ -20,6 +20,15 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
         private readonly CashReceiptBrokerOptions _cashReceiptBrokerOptions;
         private readonly ICashReceiptJobService _cashReceiptJobService;
 
+        /// <summary>
+        /// Статическое поле с предкомпилированным regex для парсинга QR кодов кассовых чеков.
+        /// Формат: t=yyyyMMddTHHmm&s=сумма&fn=фн&i=фд&fp=фп&n=тип
+        /// </summary>
+        private static readonly Regex QrCodePattern = new(
+            @"t=(?<datetime>\d{8}T\d{4})&s=(?<sum>[\d.]+)&fn=(?<fn>\d+)&i=(?<fd>\d+)&fp=(?<fp>\d+)&n=(?<n>\d+)",
+            RegexOptions.Compiled,
+            TimeSpan.FromSeconds(1));
+
         public CashReceiptValidationConsumer(
             ILogger<CashReceiptValidationConsumer> logger,
             IBus bus,
@@ -70,7 +79,7 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                         JobId = message.JobId,
                         ReceiptJson = existingReceipt.ReceiptJsonData,
                         CashReceiptId = existingReceipt.CashReceiptId,
-                        PdfUrl = existingReceipt.PdfUrl
+                        FileUrl = existingReceipt.FileUrl
                     };
 
                     var saveEndpoint = await _bus.GetSendEndpoint(new Uri($"queue:{_cashReceiptBrokerOptions.CashReceiptSaveConsumerQueueName}"));
@@ -93,6 +102,9 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                         CashReceiptJobStatus.ValidationFailed,
                         "QR код имеет неверный формат");
 
+                    // Очищаем temp хранилище (если были файлы)
+                    await _cashReceiptJobService.CleanupTempStorageAsync(message.JobId);
+
                     return;
                 }
 
@@ -108,6 +120,7 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                 var recognitionMessage = new CashReceiptRecognitionMessage
                 {
                     JobId = message.JobId,
+                    InputType = message.InputType,
                     FiscalNumber = qrData.FiscalNumber,
                     FiscalDocument = qrData.FiscalDocument,
                     FiscalSign = qrData.FiscalSign,
@@ -130,6 +143,9 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                     CashReceiptJobStatus.ValidationFailed,
                     $"Ошибка валидации: {ex.Message}");
 
+                // Очищаем temp хранилище (если были файлы)
+                await _cashReceiptJobService.CleanupTempStorageAsync(message.JobId);
+
                 throw;
             }
         }
@@ -144,8 +160,8 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                 // Формат QR: t=yyyyMMddTHHmm&s=сумма&fn=фн&i=фд&fp=фп&n=тип
                 // Пример: t=20231215T1430&s=1500.00&fn=1234567890&i=98765&fp=1234567890&n=1
 
-                var match = Regex.Match(qrSource,
-                    @"t=(?<datetime>\d{8}T\d{4})&s=(?<sum>[\d.]+)&fn=(?<fn>\d+)&i=(?<fd>\d+)&fp=(?<fp>\d+)&n=(?<n>\d+)");
+                // Используем compiled regex для максимальной производительности
+                var match = QrCodePattern.Match(qrSource);
 
                 if (!match.Success)
                     return null;

@@ -73,5 +73,21 @@ namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
         /// <param name="cancellationToken">Токен отмены</param>
         /// <returns>Список ключей файлов</returns>
         Task<List<string>> ListFilesAsync(string? folder = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Переместить файл из одного места в другое (копирование + удаление исходного)
+        /// </summary>
+        /// <param name="sourceKey">Ключ исходного файла</param>
+        /// <param name="destinationKey">Ключ файла назначения</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        /// <returns>URL нового местоположения файла</returns>
+        Task<string> MoveFileAsync(string sourceKey, string destinationKey, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Удалить папку со всем содержимым
+        /// </summary>
+        /// <param name="folderKey">Ключ папки (должен заканчиваться на /)</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        Task DeleteFolderAsync(string folderKey, CancellationToken cancellationToken = default);
     }
 }

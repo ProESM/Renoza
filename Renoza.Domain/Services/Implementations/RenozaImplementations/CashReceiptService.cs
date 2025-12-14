@@ -86,12 +86,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             {
                 case ReceiptInputType.QrCode:
                     return await SaveCashReceiptByQrCodeAsync(input.JobId, input.Data, input.CashReceiptId, input.PdfUrl, cancellationToken);
-                //case ReceiptInputType.Photo:
-                //    break;
-                //case ReceiptInputType.ImageFile:
-                //    break;
-                //case ReceiptInputType.PdfFile:
-                //    break;
+                case ReceiptInputType.Photo:
+                case ReceiptInputType.ImageFile:
+                case ReceiptInputType.PdfFile:
+                    return await SaveCashReceiptByFileAsync(input.JobId, input.Data, input.FileTempS3Url, input.FileName, cancellationToken);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(input.InputType), input.InputType, null);
             }
@@ -153,6 +151,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 // Не прерываем процесс, продолжаем сохранение данных в БД
             }
 
+            // Начинаем явную транзакцию для обеспечения атомарности операций
+            await BeginTransactionAsync(cancellationToken);
+
             try
             {
                 // Если CashReceiptId не передан, создаем новый чек
@@ -178,7 +179,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                         QrCode = cashReceiptJobDao.QrSource,
                         NormalizedQrSource = normalizedQrSource,
                         JsonData = data,
-                        PdfUrl = pdfS3Url,
+                        FileUrl = pdfS3Url,
                         TotalAmount = receiptData.Document?.Amount_Total / 100.0m,
                         DocumentDateTime = documentDateTime,
                         CreatedAt = DateTime.UtcNow
@@ -214,13 +215,141 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
                 await SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation($"JobId: {jobId}: Чек успешно сохранен (CashReceiptId: {cashReceiptId.Value})");
+                // Коммитим транзакцию
+                await CommitTransactionAsync(cancellationToken);
+
+                _logger.LogInformation($"JobId: {jobId}: Чек успешно сохранен в транзакции (CashReceiptId: {cashReceiptId.Value})");
 
                 return Result<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"JobId: {jobId}: Ошибка при сохранении чека: {ex.Message}");
+                // Откатываем транзакцию при любой ошибке
+                await RollbackTransactionAsync(cancellationToken);
+
+                _logger.LogError(ex, $"JobId: {jobId}: Ошибка при сохранении чека, транзакция откачена: {ex.Message}");
+                return Result<bool>.Failure(ex.Message);
+            }
+        }
+
+        private async Task<Result<bool>> SaveCashReceiptByFileAsync(Guid jobId, string data, string? fileTempS3Url, string? fileName, CancellationToken cancellationToken = default)
+        {
+            // Получаем Job из БД для получения CustomerId
+            var cashReceiptJobDao = await _cashReceiptJobRepository.GetByIdAsync(jobId, cancellationToken);
+            if (cashReceiptJobDao == null)
+            {
+                return Result<bool>.Failure($"Не удалось получить Job с Id: {jobId}");
+            }
+
+            var customerId = cashReceiptJobDao.CustomerId;
+
+            // Перемещаем файл из temp/ в постоянное хранилище, если есть временный URL
+            string? permanentFileUrl = null;
+
+            if (!string.IsNullOrWhiteSpace(fileTempS3Url) && !string.IsNullOrWhiteSpace(fileName))
+            {
+                string? tempFolderKey = null;
+
+                try
+                {
+                    tempFolderKey = $"temp/receipts/{jobId}";
+
+                    // Формируем ключ файла временного из временного хранилища
+                    var tempFileKey = $"{tempFolderKey}/{fileName}";
+
+                    // Формируем ключ для постоянного хранилища
+                    var permanentFileKey = $"receipts/{customerId}/{fileName}";
+
+                    // Формируем имя файла и путь в S3
+                    var pdfFileName = $"receipt_{jobId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf";
+                    var s3Folder = $"receipts/{customerId}";
+
+                    // Перемещаем файл
+                    permanentFileUrl = await _s3StorageService.MoveFileAsync(tempFileKey, permanentFileKey, cancellationToken);
+
+                    _logger.LogInformation($"JobId: {jobId}: Файл перемещен из temp в постоянное хранилище. Новый URL: {permanentFileUrl}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"JobId: {jobId}: Ошибка при перемещении файла из temp/ в постоянное хранилище");
+                    // Не прерываем процесс, продолжаем сохранение данных в БД
+                }
+            }
+
+            // Десериализуем данные чека из JSON, если его нам передали
+
+            ReceiptData? receiptData = null;
+
+            if (!string.IsNullOrWhiteSpace(data))
+            {
+                receiptData = JsonConvert.DeserializeObject<ReceiptData>(data);
+                if (receiptData == null)
+                {
+                    return Result<bool>.Failure("Не удалось десериализовать данные чека");
+                }
+            }
+
+            // Начинаем явную транзакцию для обеспечения атомарности операций
+            await BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                DateTime? documentDateTime = receiptData?.PurchaseDateTime;
+
+                // Сохранение данных по кассовому чеку
+                var cashReceiptId = Guid.NewGuid();
+                var cashReceiptDao = new CashReceiptDao
+                {
+                    Id = cashReceiptId,
+                    QrCode = cashReceiptJobDao.QrSource,
+                    NormalizedQrSource = cashReceiptId.ToString(), // так как по этому полю ищем совпадения
+                    JsonData = data,
+                    FileUrl = permanentFileUrl,
+                    TotalAmount = receiptData?.TotalSum,
+                    DocumentDateTime = documentDateTime,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _cashReceiptRepository.CreateAsync(cashReceiptDao, cancellationToken);
+
+                // Создаем или проверяем связь клиента с чеком
+                var exists = await _customerCashReceiptRepository.GetQueryable()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.CustomerId == customerId && x.CashReceiptId == cashReceiptId,
+                              cancellationToken);
+
+                if (!exists)
+                {
+                    var customerCashReceiptDao = new CustomerCashReceiptDao
+                    {
+                        CustomerId = customerId,
+                        CashReceiptId = cashReceiptId,
+                        OrderId = cashReceiptJobDao.OrderId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _customerCashReceiptRepository.CreateAsync(customerCashReceiptDao, cancellationToken);
+                }
+
+                // Привязываем Job к CashReceipt
+                cashReceiptJobDao.CashReceiptId = cashReceiptId;
+                _cashReceiptJobRepository.Update(cashReceiptJobDao);
+
+                await SaveChangesAsync(cancellationToken);
+
+                // Коммитим транзакцию
+                await CommitTransactionAsync(cancellationToken);
+
+                _logger.LogInformation($"JobId: {jobId}: Чек успешно сохранен в транзакции (CashReceiptId: {cashReceiptId})");
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                // Откатываем транзакцию при любой ошибке
+                await RollbackTransactionAsync(cancellationToken);
+
+                _logger.LogError(ex, $"JobId: {jobId}: Ошибка при сохранении чека, транзакция откачена: {ex.Message}");
                 return Result<bool>.Failure(ex.Message);
             }
         }

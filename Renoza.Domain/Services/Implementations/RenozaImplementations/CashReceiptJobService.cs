@@ -20,6 +20,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     {
         private readonly ILogger<CashReceiptJobService> _logger;
         private readonly IMapper _mapper;
+        private readonly IS3StorageService _s3StorageService;
 
         #region Репозитории
 
@@ -35,7 +36,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             RenozaContext dbContext,
             IEntityWithIdRepository<CashReceiptDao, Guid> cashReceiptRepository,
             IEntityWithIdRepository<CashReceiptJobDao, Guid> cashReceiptJobRepository,
-            IEntityWithIdRepository<CashReceiptJobHistoryDao, long> cashReceiptJobHistoryRepository)
+            IEntityWithIdRepository<CashReceiptJobHistoryDao, long> cashReceiptJobHistoryRepository,
+            IS3StorageService s3StorageService)
             : base(dbContext)
         {
             _logger = logger;
@@ -43,6 +45,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             _cashReceiptRepository = cashReceiptRepository;
             _cashReceiptJobRepository = cashReceiptJobRepository;
             _cashReceiptJobHistoryRepository = cashReceiptJobHistoryRepository;
+            _s3StorageService = s3StorageService;
         }
 
         /// <summary>
@@ -52,6 +55,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             CreateCashReceiptJobInput input,
             CancellationToken cancellationToken = default)
         {
+            // Начинаем явную транзакцию для атомарности создания Job + History
+            await BeginTransactionAsync(cancellationToken);
+
             try
             {
                 // Создаем новый Job с начальным статусом Pending
@@ -82,13 +88,19 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 await _cashReceiptJobHistoryRepository.CreateAsync(historyDao, cancellationToken);
                 await SaveChangesAsync(cancellationToken);
 
+                // Коммитим транзакцию
+                await CommitTransactionAsync(cancellationToken);
+
                 _logger.LogInformation($"Создан запрос на загрузку чека: {jobDao.Id}");
 
                 return Result<Guid>.Success(jobDao.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка при создании запроса на загрузку чека: {ex.Message}");
+                // Откатываем транзакцию при ошибке
+                await RollbackTransactionAsync(cancellationToken);
+
+                _logger.LogError(ex, $"Ошибка при создании запроса на загрузку чека, транзакция откачена: {ex.Message}");
                 return Result<Guid>.Failure($"Ошибка при создании запроса: {ex.Message}");
             }
         }
@@ -102,6 +114,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             string? comment = null,
             CancellationToken cancellationToken = default)
         {
+            // Начинаем явную транзакцию для атомарности обновления Job + создания History
+            await BeginTransactionAsync(cancellationToken);
+
             try
             {
                 var job = await _cashReceiptJobRepository.GetQueryable()
@@ -147,13 +162,19 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 await _cashReceiptJobHistoryRepository.CreateAsync(historyDao, cancellationToken);
                 await SaveChangesAsync(cancellationToken);
 
+                // Коммитим транзакцию
+                await CommitTransactionAsync(cancellationToken);
+
                 _logger.LogInformation($"Обновлен статус запроса {jobId} на {newStatus}");
 
                 return Result<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка при обновлении статуса запроса {jobId}: {ex.Message}");
+                // Откатываем транзакцию при ошибке
+                await RollbackTransactionAsync(cancellationToken);
+
+                _logger.LogError(ex, $"Ошибка при обновлении статуса запроса {jobId}, транзакция откачена: {ex.Message}");
                 return Result<bool>.Failure($"Ошибка при обновлении статуса: {ex.Message}");
             }
         }
@@ -261,7 +282,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 {
                     CashReceiptId = receiptDao.Id,
                     ReceiptJsonData = receiptDao.JsonData ?? string.Empty,
-                    PdfUrl = receiptDao.PdfUrl
+                    FileUrl = receiptDao.FileUrl
                 };
 
                 return Result<CompletedCashReceiptJobResult?>.Success(result);
@@ -270,6 +291,28 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             {
                 _logger.LogError(ex, $"Ошибка при поиске обработанного чека по QR коду: {ex.Message}");
                 return Result<CompletedCashReceiptJobResult?>.Failure($"Ошибка при поиске чека: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Удалить временную папку чека в S3 при ошибке обработки
+        /// </summary>
+        public async Task CleanupTempStorageAsync(
+            Guid jobId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var tempFolderKey = $"temp/receipts/{jobId}";
+                await _s3StorageService.DeleteFolderAsync(tempFolderKey, cancellationToken);
+
+                _logger.LogInformation($"JobId: {jobId}: Временная папка {tempFolderKey} успешно удалена");
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку, но не пробрасываем её дальше
+                // Файлы будут удалены автоматически через S3 Lifecycle Policy
+                _logger.LogWarning(ex, $"JobId: {jobId}: Не удалось удалить временную папку. Файлы будут удалены по расписанию через Lifecycle Policy");
             }
         }
     }

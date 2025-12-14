@@ -26,10 +26,10 @@ namespace Renoza.Infrastructure.Entities.Renoza
         public string? JsonData { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ссылка на PDF файл чека
+        /// Ссылка на файл чека
         /// </summary>
         [MaxLength(500)]
-        public string? PdfUrl { get; set; } = string.Empty;
+        public string? FileUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Общая сумма чека

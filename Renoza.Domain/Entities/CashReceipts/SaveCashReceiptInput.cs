@@ -41,5 +41,11 @@ namespace Renoza.Domain.Entities.CashReceipts
         /// URL PDF файла чека в S3 (опционально, для переиспользования существующего)
         /// </summary>
         public string? PdfUrl { get; set; }
+
+        /// <summary>
+        /// Временный URL файла в S3 (папка temp/)
+        /// Используется для перемещения файла в постоянное хранилище
+        /// </summary>
+        public string? FileTempS3Url { get; set; }
     }
 }

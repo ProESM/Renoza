@@ -16,8 +16,8 @@ namespace Renoza.Domain.Entities.CashReceipts
         public string ReceiptJsonData { get; set; } = string.Empty;
 
         /// <summary>
-        /// URL PDF файла чека в S3
+        /// URL файла чека в S3
         /// </summary>
-        public string? PdfUrl { get; set; }
+        public string? FileUrl { get; set; }
     }
 }

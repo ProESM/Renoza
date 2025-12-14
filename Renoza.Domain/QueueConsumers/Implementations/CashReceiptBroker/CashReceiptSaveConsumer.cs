@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Renoza.Domain.Entities.CashReceipts;
 using Renoza.Domain.Enums;
 using Renoza.Domain.Messages.CashReceipt;
-using Renoza.Domain.Options;
 using Renoza.Domain.QueueConsumers.Interfaces;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
 
@@ -15,25 +14,19 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
     public class CashReceiptSaveConsumer : IQueueConsumer<CashReceiptSaveMessage>
     {
         private readonly ILogger<CashReceiptSaveConsumer> _logger;
-        private readonly CashReceiptBrokerOptions _cashReceiptBrokerOptions;
         private readonly ICashReceiptJobService _cashReceiptJobService;
         private readonly ICashReceiptService _cashReceiptService;
-        private readonly ICashReceiptPdfService _cashReceiptPdfService;
         private readonly IS3StorageService _s3StorageService;
 
         public CashReceiptSaveConsumer(
             ILogger<CashReceiptSaveConsumer> logger,
-            CashReceiptBrokerOptions cashReceiptBrokerOptions,
             ICashReceiptJobService cashReceiptJobService,
             ICashReceiptService cashReceiptService,
-            ICashReceiptPdfService cashReceiptPdfService,
             IS3StorageService s3StorageService)
         {
             _logger = logger;
-            _cashReceiptBrokerOptions = cashReceiptBrokerOptions;
             _cashReceiptJobService = cashReceiptJobService;
             _cashReceiptService = cashReceiptService;
-            _cashReceiptPdfService = cashReceiptPdfService;
             _s3StorageService = s3StorageService;
         }
 
@@ -46,16 +39,20 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
         {
             _logger.LogInformation($"Начато сохранение чека в БД. JobId: {message.JobId}");
 
+            string? tempFolderKey = null;
+
             try
             {
                 // Сохранение чека
                 var input = new SaveCashReceiptInput
                 {
                     JobId = message.JobId,
-                    InputType = ReceiptInputType.QrCode,
+                    InputType = message.InputType,
                     Data = message.ReceiptJson,
                     CashReceiptId = message.CashReceiptId,
-                    PdfUrl = message.PdfUrl
+                    FileTempS3Url = message.FileTempS3Url,
+                    ContentType = message.FileContentType,
+                    FileName = message.FileName
                 };
 
                 var result = await _cashReceiptService.SaveCashReceiptAsync(input);
@@ -69,10 +66,22 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                         CashReceiptJobStatus.SaveFailed,
                         $"Ошибка сохранения: {result.ErrorMessage}");
 
+                    // Удаляем временную папку при ошибке
+                    if (!string.IsNullOrWhiteSpace(tempFolderKey))
+                    {
+                        await CleanupTempFolder(tempFolderKey, message.JobId);
+                    }
+
                     return;
                 }
 
                 _logger.LogInformation($"JobId: {message.JobId}: Чек успешно сохранен в БД.");
+
+                // Удаляем временную папку после успешного сохранения
+                if (!string.IsNullOrWhiteSpace(tempFolderKey))
+                {
+                    await CleanupTempFolder(tempFolderKey, message.JobId);
+                }
 
                 // Обновляем статус на Completed
                 await _cashReceiptJobService.CompleteJobAsync(message.JobId);
@@ -88,7 +97,30 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                     CashReceiptJobStatus.SaveFailed,
                     $"Ошибка сохранения: {ex.Message}");
 
+                // Удаляем временную папку при ошибке
+                if (!string.IsNullOrWhiteSpace(tempFolderKey))
+                {
+                    await CleanupTempFolder(tempFolderKey, message.JobId);
+                }
+
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Удаляет временную папку в S3
+        /// </summary>
+        private async Task CleanupTempFolder(string tempFolderKey, Guid jobId)
+        {
+            try
+            {
+                await _s3StorageService.DeleteFolderAsync(tempFolderKey);
+                _logger.LogInformation($"JobId: {jobId}: Временная папка {tempFolderKey} успешно удалена");
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку, но не пробрасываем её дальше
+                _logger.LogWarning(ex, $"JobId: {jobId}: Не удалось удалить временную папку {tempFolderKey}. Файлы будут удалены по расписанию через Lifecycle Policy");
             }
         }
     }

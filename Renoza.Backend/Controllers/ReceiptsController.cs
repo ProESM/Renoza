@@ -34,7 +34,7 @@ namespace Renoza.Backend.Controllers
         [ProducesResponseType(typeof(UploadCashReceiptResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<IActionResult> UploadCashReceipt([FromBody] UploadCashReceiptRequest request)
+        public async Task<IActionResult> UploadCashReceipt([FromForm] UploadCashReceiptRequest request)
         {
             try
             {

@@ -102,35 +102,52 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 return Result<User>.Failure("Пользователь с таким номером телефона уже существует");
             }
 
-            // Создаем нового пользователя
-            var userId = Guid.NewGuid();
-            var userDao = new UserDao
-            {
-                Id = userId,
-                Name = name,
-                DisplayName = displayName,
-                Email = email,
-                PhoneNumber = phoneNumber,
-                PhoneCountryCode = phoneCountryCode,
-                IsEmailVerified = false,
-                IsPhoneNumberVerified = false,
-                IsActive = false, // Пользователь станет активным после верификации
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            // Начинаем явную транзакцию для атомарности создания User + Password
+            await BeginTransactionAsync(CancellationToken.None);
 
-            await _userRepository.CreateAsync(userDao, CancellationToken.None);
-
-            // Создаем пароль для пользователя
-            var passwordCreated = await _passwordService.SetPasswordAsync(userId, password, CancellationToken.None);
-            if (!passwordCreated)
+            try
             {
-                return Result<User>.Failure("Не удалось создать пароль");
+                // Создаем нового пользователя
+                var userId = Guid.NewGuid();
+                var userDao = new UserDao
+                {
+                    Id = userId,
+                    Name = name,
+                    DisplayName = displayName,
+                    Email = email,
+                    PhoneNumber = phoneNumber,
+                    PhoneCountryCode = phoneCountryCode,
+                    IsEmailVerified = false,
+                    IsPhoneNumberVerified = false,
+                    IsActive = false, // Пользователь станет активным после верификации
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _userRepository.CreateAsync(userDao, CancellationToken.None);
+
+                // Создаем пароль для пользователя
+                var passwordCreated = await _passwordService.SetPasswordAsync(userId, password, CancellationToken.None);
+                if (!passwordCreated)
+                {
+                    // Откатываем транзакцию, если не удалось создать пароль
+                    await RollbackTransactionAsync(CancellationToken.None);
+                    return Result<User>.Failure("Не удалось создать пароль");
+                }
+
+                await SaveChangesAsync();
+
+                // Коммитим транзакцию
+                await CommitTransactionAsync(CancellationToken.None);
+
+                return Result<User>.Success(_mapper.Map<User>(userDao));
             }
-
-            await SaveChangesAsync();
-
-            return Result<User>.Success(_mapper.Map<User>(userDao));
+            catch (Exception ex)
+            {
+                // Откатываем транзакцию при любой ошибке
+                await RollbackTransactionAsync(CancellationToken.None);
+                return Result<User>.Failure($"Ошибка при регистрации пользователя: {ex.Message}");
+            }
         }
     }
 }
