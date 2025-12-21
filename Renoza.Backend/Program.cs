@@ -40,6 +40,7 @@ builder.Services.AddDomainCore(builder.Configuration)
     .AddRedisServices(builder.Configuration)
     .AddRateLimitingServices(builder.Configuration)
     .AddS3Services(builder.Configuration)
+    .AddDocumentServices()
     ;
 // Настраиваем Jwt Bearer аутентификацию
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);

@@ -141,6 +141,31 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<CashReceiptJobHistoryDao, long>(context);
             });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<DocumentTemplateTypeDao, short>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<DocumentTemplateTypeDao, short>(context);
+            });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<DocumentFormatDao, short>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<DocumentFormatDao, short>(context);
+            });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<DocumentStatusDao, short>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<DocumentStatusDao, short>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<DocumentTemplateDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<DocumentTemplateDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<DocumentDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<DocumentDao, Guid>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -350,6 +375,16 @@ namespace Renoza.Domain.DI
 
                 services.AddScoped<IS3StorageService, S3StorageService>();
             }
+            return services;
+        }
+
+        // Опционально: Document Services
+        public static IServiceCollection AddDocumentServices(
+            this IServiceCollection services)
+        {
+            services.AddScoped<IDocumentPlaceholderService, DocumentPlaceholderService>();
+            services.AddScoped<IDocumentTemplateService, DocumentTemplateService>();
+            services.AddScoped<IDocumentService, DocumentService>();
             return services;
         }
 
