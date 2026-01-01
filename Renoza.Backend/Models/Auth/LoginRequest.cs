@@ -23,5 +23,10 @@ namespace Renoza.Backend.Models.Auth
         /// Тип логина: "username", "email", "phone"
         /// </summary>
         public string? LoginType { get; set; }
+
+        /// <summary>
+        /// Идентификатор выбранной роли (опционально, если не указана - берется первая активная роль)
+        /// </summary>
+        public Guid? SelectedRoleId { get; set; }
     }
 }

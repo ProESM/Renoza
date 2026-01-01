@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Renoza.Backend.Models.Auth;
+using Renoza.Domain.Entities.Auth;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
 using System.Text.RegularExpressions;
 
@@ -20,6 +21,7 @@ namespace Renoza.Backend.Controllers
         private readonly IPasswordService _passwordService;
         private readonly IEmailVerificationService _emailVerificationService;
         private readonly IPhoneVerificationService _phoneVerificationService;
+        private readonly IRoleService _roleService;
 
         public AuthController(
             ILogger<AuthController> logger,
@@ -27,7 +29,8 @@ namespace Renoza.Backend.Controllers
             IUserService userService,
             IPasswordService passwordService,
             IEmailVerificationService emailVerificationService,
-            IPhoneVerificationService phoneVerificationService)
+            IPhoneVerificationService phoneVerificationService,
+            IRoleService roleService)
         {
             _logger = logger;
             _jwtService = jwtService;
@@ -35,6 +38,7 @@ namespace Renoza.Backend.Controllers
             _passwordService = passwordService;
             _emailVerificationService = emailVerificationService;
             _phoneVerificationService = phoneVerificationService;
+            _roleService = roleService;
         }
 
         /// <summary>
@@ -103,8 +107,36 @@ namespace Renoza.Backend.Controllers
                     return Unauthorized(new { message = "Неверное имя пользователя или пароль" });
                 }
 
+                // Получаем роли пользователя
+                var userRoles = await _roleService.GetUserRolesAsync(user.Id);
+                if (userRoles == null || userRoles.Count == 0)
+                {
+                    _logger.LogWarning("Пользователь {Username} не имеет назначенных ролей", request.Username);
+                    return Unauthorized(new { message = "Пользователь не имеет назначенных ролей" });
+                }
+
+                // Определяем выбранную роль
+                Guid selectedRoleId;
+                if (request.SelectedRoleId.HasValue)
+                {
+                    // Проверяем, что выбранная роль есть у пользователя
+                    var selectedRole = userRoles.FirstOrDefault(r => r.Id == request.SelectedRoleId.Value);
+                    if (selectedRole == null)
+                    {
+                        _logger.LogWarning("Пользователь {Username} попытался использовать роль {RoleId}, которая ему не назначена",
+                            request.Username, request.SelectedRoleId.Value);
+                        return Unauthorized(new { message = "Выбранная роль не назначена пользователю" });
+                    }
+                    selectedRoleId = request.SelectedRoleId.Value;
+                }
+                else
+                {
+                    // Берем первую активную роль
+                    selectedRoleId = userRoles.First().Id;
+                }
+
                 // Генерация JWT токена
-                var (token, expiresAt) = _jwtService.GenerateToken(user);
+                var (token, expiresAt) = _jwtService.GenerateToken(user, selectedRoleId);
 
                 var response = new AuthResponse
                 {
@@ -143,6 +175,14 @@ namespace Renoza.Backend.Controllers
                     return Unauthorized(new { message = "Невалидный токен" });
                 }
 
+                // Получаем текущую активную роль из JWT
+                var currentRoleIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role);
+                Guid? currentRoleId = null;
+                if (currentRoleIdClaim != null && Guid.TryParse(currentRoleIdClaim.Value, out var roleId))
+                {
+                    currentRoleId = roleId;
+                }
+
                 var user = await _userService.GetQueryable()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == userId);
@@ -152,11 +192,21 @@ namespace Renoza.Backend.Controllers
                     return NotFound(new { message = "Пользователь не найден" });
                 }
 
+                // Получаем все роли пользователя
+                var userRoles = await _roleService.GetUserRolesAsync(userId);
+
                 return Ok(new
                 {
                     id = user.Id,
                     name = user.Name,
-                    isActive = user.IsActive
+                    isActive = user.IsActive,
+                    currentRoleId = currentRoleId,
+                    roles = userRoles.Select(r => new
+                    {
+                        id = r.Id,
+                        name = r.Name,
+                        description = r.Description
+                    })
                 });
             }
             catch (Exception ex)
@@ -183,14 +233,24 @@ namespace Renoza.Backend.Controllers
                     return BadRequest(ModelState);
                 }
 
+                // Получаем IP адрес клиента
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
                 // Регистрация пользователя
-                var result = await _userService.RegisterUserAsync(
-                    request.Name,
-                    request.DisplayName,
-                    request.Email,
-                    request.PhoneNumber,
-                    request.PhoneCountryCode,
-                    request.Password);
+                var input = new RegisterUserInput
+                {
+                    Name = request.Name,
+                    DisplayName = request.DisplayName,
+                    Email = request.Email,
+                    PhoneNumber = request.PhoneNumber,
+                    PhoneCountryCode = request.PhoneCountryCode,
+                    Password = request.Password,
+                    UserRole = request.UserRole,
+                    CompanyInn = request.CompanyInn,
+                    IpAddress = ipAddress
+                };
+
+                var result = await _userService.RegisterUserAsync(input);
 
                 if (!result.IsSuccess)
                 {

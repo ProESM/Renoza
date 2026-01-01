@@ -24,7 +24,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         private readonly IDocumentPlaceholderService _placeholderService;
         private readonly IEntityWithIdRepository<DocumentTemplateDao, Guid> _templateRepository;
         private readonly IEntityWithIdRepository<DocumentDao, Guid> _documentRepository;
-        private readonly IEntityWithIdRepository<DocumentFormatDao, short> _formatRepository;
+        private readonly IReadOnlyEntityWithIdRepository<DocumentFormatDao, short> _formatRepository;
 
         public DocumentService(
             ILogger<DocumentService> logger,
@@ -34,7 +34,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             IDocumentPlaceholderService placeholderService,
             IEntityWithIdRepository<DocumentTemplateDao, Guid> templateRepository,
             IEntityWithIdRepository<DocumentDao, Guid> documentRepository,
-            IEntityWithIdRepository<DocumentFormatDao, short> formatRepository)
+            IReadOnlyEntityWithIdRepository<DocumentFormatDao, short> formatRepository)
             : base(dbContext)
         {
             _logger = logger;

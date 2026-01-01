@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Renoza.Domain.Attributes;
 using Renoza.Domain.Entities.Roles;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
@@ -74,6 +75,26 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         {
             var roleDao = await _roleRepository.GetByIdAsync(id, CancellationToken.None);
             return roleDao != null ? _mapper.Map<Role>(roleDao) : null;
+        }
+
+        /// <summary>
+        /// Получить идентификатор роли по имени
+        /// </summary>
+        /// <param name="roleName">Имя роли (Customer, Worker, TechnicalSupervisor)</param>
+        /// <returns>Идентификатор роли или null</returns>
+        public Guid? GetRoleIdByName(string roleName)
+        {
+            if (!Enum.TryParse<Enums.Role>(roleName, out var roleEnum))
+                return null;
+
+            var memberInfo = typeof(Enums.Role).GetMember(roleEnum.ToString()).FirstOrDefault();
+            if (memberInfo == null)
+                return null;
+
+            var attribute = memberInfo.GetCustomAttributes(typeof(RoleDetailsAttribute), false)
+                .FirstOrDefault() as RoleDetailsAttribute;
+
+            return attribute?.Id;
         }
 
         /// <summary>

@@ -23,6 +23,13 @@ namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
         Task<Role?> GetByIdAsync(Guid id);
 
         /// <summary>
+        /// Получить идентификатор роли по имени
+        /// </summary>
+        /// <param name="roleName">Имя роли (Customer, Worker, TechnicalSupervisor)</param>
+        /// <returns>Идентификатор роли или null</returns>
+        Guid? GetRoleIdByName(string roleName);
+
+        /// <summary>
         /// Получить роли пользователя
         /// </summary>
         /// <param name="userId">Идентификатор пользователя</param>

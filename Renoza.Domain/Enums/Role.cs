@@ -1,4 +1,4 @@
-using System.ComponentModel;
+using Renoza.Domain.Attributes;
 
 namespace Renoza.Domain.Enums
 {
@@ -10,25 +10,25 @@ namespace Renoza.Domain.Enums
         /// <summary>
         /// Администратор системы
         /// </summary>
-        [Description("Администратор")]
+        [RoleDetails("00000000-0000-0000-0000-000000000001", "Администратор", "Администратор системы", true, true)]
         Administrator,
 
         /// <summary>
         /// Заказчик ремонтных работ
         /// </summary>
-        [Description("Заказчик")]
+        [RoleDetails("00000000-0000-0000-0000-000000000002", "Заказчик", "Заказчик ремонтных работ", false, true)]
         Customer,
 
         /// <summary>
         /// Работник/Исполнитель ремонтных работ
         /// </summary>
-        [Description("Работник")]
+        [RoleDetails("00000000-0000-0000-0000-000000000003", "Работник", "Работник/Исполнитель ремонтных работ", false, true)]
         Worker,
 
         /// <summary>
         /// Технический надзор
         /// </summary>
-        [Description("Технический надзор")]
+        [RoleDetails("00000000-0000-0000-0000-000000000004", "Технический надзор", "Технический надзор", false, true)]
         TechnicalSupervisor
     }
 }

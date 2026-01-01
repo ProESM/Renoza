@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Renoza.Backend.Attributes;
 using Renoza.Domain.Entities.Documents;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
 using System.Security.Claims;
@@ -9,9 +10,18 @@ namespace Renoza.Backend.Controllers
     /// <summary>
     /// Контроллер для работы с шаблонами документов
     /// </summary>
+    /// <remarks>
+    /// Требуется верификация email ИЛИ телефона для доступа к методам контроллера.
+    /// Примеры использования атрибута RequireVerification:
+    /// - [RequireVerification] - требуется email ИЛИ телефон (по умолчанию)
+    /// - [RequireVerification(RequireBoth = true)] - требуется И email И телефон
+    /// - [RequireVerification(RequireEmailVerification = true, RequirePhoneVerification = false)] - только email
+    /// - [RequireVerification(RequireEmailVerification = false, RequirePhoneVerification = true)] - только телефон
+    /// </remarks>
     [ApiController]
     [Route("api/document-templates")]
     [Authorize]
+    [RequireVerification]
     public class DocumentTemplatesController : ControllerBase
     {
         private readonly IDocumentTemplateService _templateService;
@@ -25,6 +35,9 @@ namespace Renoza.Backend.Controllers
             _logger = logger;
         }
 
+        // ВРЕМЕННО ЗАКОММЕНТИРОВАНО ИЗ-ЗА ПРОБЛЕМ СО SWAGGER
+        // TODO: Исправить конфигурацию Swagger для работы с IFormFile
+        /*
         /// <summary>
         /// Создать шаблон документа
         /// </summary>
@@ -34,6 +47,7 @@ namespace Renoza.Backend.Controllers
         /// <param name="description">Описание шаблона</param>
         /// <returns>Идентификатор созданного шаблона</returns>
         [HttpPost]
+        [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(
@@ -88,6 +102,7 @@ namespace Renoza.Backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ошибка при обработке запроса" });
             }
         }
+        */
 
         /// <summary>
         /// Получить список шаблонов

@@ -59,6 +59,9 @@ namespace Renoza.Backend.Configuration
                     requirement.Add(reference, new List<string>());
                     return requirement;
                 });
+
+                // ВРЕМЕННО ОТКЛЮЧЕНО: Добавляем поддержку IFormFile и multipart/form-data
+                // c.OperationFilter<FileUploadOperationFilter>();
             });
 
             return services;

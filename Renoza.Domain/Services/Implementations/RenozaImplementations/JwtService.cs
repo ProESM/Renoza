@@ -23,7 +23,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Генерация JWT токена для пользователя
         /// </summary>
-        public (string Token, DateTime ExpiresAt) GenerateToken(User user)
+        public (string Token, DateTime ExpiresAt) GenerateToken(User user, Guid roleId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
@@ -33,6 +33,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Role, roleId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Renoza.Common.Helpers;
+using Renoza.Domain.Entities.Auth;
+using Renoza.Domain.Entities.Profiles;
 using Renoza.Domain.Entities.Users;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
@@ -31,6 +33,26 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// </summary>
         private readonly IPasswordService _passwordService;
 
+        /// <summary>
+        /// Сервис работы с профилями заказчиков
+        /// </summary>
+        private readonly ICustomerProfileService _customerProfileService;
+
+        /// <summary>
+        /// Сервис работы с профилями работников
+        /// </summary>
+        private readonly IWorkerProfileService _workerProfileService;
+
+        /// <summary>
+        /// Сервис работы с профилями технических руководителей
+        /// </summary>
+        private readonly ITechnicalSupervisorProfileService _technicalSupervisorProfileService;
+
+        /// <summary>
+        /// Сервис работы с ролями
+        /// </summary>
+        private readonly IRoleService _roleService;
+
         #endregion
 
         #region Мапперы
@@ -48,15 +70,27 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="dbContext">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
         /// <param name="passwordService">Сервис работы с паролями</param>
+        /// <param name="customerProfileService">Сервис работы с профилями заказчиков</param>
+        /// <param name="workerProfileService">Сервис работы с профилями работников</param>
+        /// <param name="technicalSupervisorProfileService">Сервис работы с профилями технических руководителей</param>
+        /// <param name="roleService">Сервис работы с ролями</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public UserService(
             RenozaContext dbContext,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
             IPasswordService passwordService,
+            ICustomerProfileService customerProfileService,
+            IWorkerProfileService workerProfileService,
+            ITechnicalSupervisorProfileService technicalSupervisorProfileService,
+            IRoleService roleService,
             IMapper mapper) : base(dbContext)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;
+            _customerProfileService = customerProfileService;
+            _workerProfileService = workerProfileService;
+            _technicalSupervisorProfileService = technicalSupervisorProfileService;
+            _roleService = roleService;
             _mapper = mapper;
         }
 
@@ -73,12 +107,12 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Зарегистрировать нового пользователя
         /// </summary>
-        public async Task<Result<User>> RegisterUserAsync(string name, string displayName, string email, string phoneNumber, string phoneCountryCode, string password)
+        public async Task<Result<User>> RegisterUserAsync(RegisterUserInput input, CancellationToken cancellationToken = default)
         {
             // Проверяем уникальность имени пользователя
             var nameExists = await _userRepository.GetQueryable()
                 .AsNoTracking()
-                .AnyAsync(u => u.Name == name);
+                .AnyAsync(u => u.Name == input.Name, cancellationToken);
             if (nameExists)
             {
                 return Result<User>.Failure("Пользователь с таким именем уже существует");
@@ -87,7 +121,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             // Проверяем уникальность email
             var emailExists = await _userRepository.GetQueryable()
                 .AsNoTracking()
-                .AnyAsync(u => u.Email == email);
+                .AnyAsync(u => u.Email == input.Email, cancellationToken);
             if (emailExists)
             {
                 return Result<User>.Failure("Пользователь с таким email уже существует");
@@ -96,14 +130,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             // Проверяем уникальность телефона
             var phoneExists = await _userRepository.GetQueryable()
                 .AsNoTracking()
-                .AnyAsync(u => u.PhoneNumber == phoneNumber && u.PhoneCountryCode == phoneCountryCode);
+                .AnyAsync(u => u.PhoneNumber == input.PhoneNumber && u.PhoneCountryCode == input.PhoneCountryCode, cancellationToken);
             if (phoneExists)
             {
                 return Result<User>.Failure("Пользователь с таким номером телефона уже существует");
             }
 
-            // Начинаем явную транзакцию для атомарности создания User + Password
-            await BeginTransactionAsync(CancellationToken.None);
+            // Начинаем явную транзакцию для атомарности создания User + Password + Profile
+            await BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -112,11 +146,11 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                 var userDao = new UserDao
                 {
                     Id = userId,
-                    Name = name,
-                    DisplayName = displayName,
-                    Email = email,
-                    PhoneNumber = phoneNumber,
-                    PhoneCountryCode = phoneCountryCode,
+                    Name = input.Name,
+                    DisplayName = input.DisplayName,
+                    Email = input.Email,
+                    PhoneNumber = input.PhoneNumber,
+                    PhoneCountryCode = input.PhoneCountryCode,
                     IsEmailVerified = false,
                     IsPhoneNumberVerified = false,
                     IsActive = false, // Пользователь станет активным после верификации
@@ -124,28 +158,97 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                await _userRepository.CreateAsync(userDao, CancellationToken.None);
+                await _userRepository.CreateAsync(userDao, cancellationToken);
 
                 // Создаем пароль для пользователя
-                var passwordCreated = await _passwordService.SetPasswordAsync(userId, password, CancellationToken.None);
+                var passwordCreated = await _passwordService.SetPasswordAsync(userId, input.Password, cancellationToken);
                 if (!passwordCreated)
                 {
-                    // Откатываем транзакцию, если не удалось создать пароль
-                    await RollbackTransactionAsync(CancellationToken.None);
+                    await RollbackTransactionAsync(cancellationToken);
                     return Result<User>.Failure("Не удалось создать пароль");
                 }
 
-                await SaveChangesAsync();
+                // Создаем профиль в зависимости от роли
+                var userRole = input.UserRole?.Trim();
+
+                if (userRole == "Customer")
+                {
+                    // Создаем профиль заказчика
+                    var customerProfile = new CustomerProfile
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId
+                    };
+
+                    await _customerProfileService.CreateAsync(customerProfile);
+                }
+                else if (userRole == "Worker")
+                {
+                    // Для работника требуется ИНН компании
+                    if (string.IsNullOrWhiteSpace(input.CompanyInn))
+                    {
+                        await RollbackTransactionAsync(cancellationToken);
+                        return Result<User>.Failure("Для роли Worker необходимо указать ИНН компании");
+                    }
+
+                    await _workerProfileService.CreateWithCompanyAsync(
+                        userId,
+                        input.CompanyInn,
+                        input.IpAddress ?? string.Empty,
+                        cancellationToken);
+                }
+                else if (userRole == "TechnicalSupervisor")
+                {
+                    // Для технического руководителя требуется ИНН компании
+                    if (string.IsNullOrWhiteSpace(input.CompanyInn))
+                    {
+                        await RollbackTransactionAsync(cancellationToken);
+                        return Result<User>.Failure("Для роли TechnicalSupervisor необходимо указать ИНН компании");
+                    }
+
+                    await _technicalSupervisorProfileService.CreateWithCompanyAsync(
+                        userId,
+                        input.CompanyInn,
+                        input.IpAddress ?? string.Empty,
+                        cancellationToken);
+                }
+                else
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    return Result<User>.Failure($"Неизвестная роль пользователя: {userRole}");
+                }
+
+                // Назначаем роль пользователю
+                if (!string.IsNullOrWhiteSpace(userRole))
+                {
+                    var roleId = _roleService.GetRoleIdByName(userRole);
+                    if (roleId.HasValue)
+                    {
+                        var roleAssigned = await _roleService.AssignRoleToUserAsync(userId, roleId.Value);
+                        if (!roleAssigned)
+                        {
+                            await RollbackTransactionAsync(cancellationToken);
+                            return Result<User>.Failure($"Не удалось назначить роль {userRole} пользователю");
+                        }
+                    }
+                    else
+                    {
+                        await RollbackTransactionAsync(cancellationToken);
+                        return Result<User>.Failure($"Роль {userRole} не найдена в системе");
+                    }
+                }
+
+                await SaveChangesAsync(cancellationToken);
 
                 // Коммитим транзакцию
-                await CommitTransactionAsync(CancellationToken.None);
+                await CommitTransactionAsync(cancellationToken);
 
                 return Result<User>.Success(_mapper.Map<User>(userDao));
             }
             catch (Exception ex)
             {
                 // Откатываем транзакцию при любой ошибке
-                await RollbackTransactionAsync(CancellationToken.None);
+                await RollbackTransactionAsync(cancellationToken);
                 return Result<User>.Failure($"Ошибка при регистрации пользователя: {ex.Message}");
             }
         }

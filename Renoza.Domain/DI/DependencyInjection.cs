@@ -166,6 +166,36 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<DocumentDao, Guid>(context);
             });
+            services.AddScoped<IEntityWithIdRepository<CompanyProfileDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyProfileDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CompanyVerificationDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyVerificationDao, Guid>(context);
+            });
+            services.AddScoped<IReadOnlyEntityWithIdRepository<CompanyVerificationJobStatusDao, short>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new ReadOnlyEntityWithIdRepository<CompanyVerificationJobStatusDao, short>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CompanyVerificationJobDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyVerificationJobDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CompanyVerificationJobHistoryDao, long>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyVerificationJobHistoryDao, long>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<TechnicalSupervisorProfileDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<TechnicalSupervisorProfileDao, Guid>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -182,12 +212,26 @@ namespace Renoza.Domain.DI
                 }
             });
 
-            // Регистрируем сервисы
+            // Регистрируем базовые сервисы (не зависят от очередей)
             services.AddScoped<IPhoneCountryCodeService, PhoneCountryCodeService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+            services.AddScoped<ICompanyProfileService, CompanyProfileService>();
+            services.AddScoped<ICompanyVerificationJobService, CompanyVerificationJobService>();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Регистрирует сервисы профилей пользователей (требуют QueueOptions)
+        /// </summary>
+        public static IServiceCollection AddProfileServices(
+            this IServiceCollection services)
+        {
             services.AddScoped<ICustomerProfileService, CustomerProfileService>();
             services.AddScoped<IWorkerProfileService, WorkerProfileService>();
-            services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+            services.AddScoped<ITechnicalSupervisorProfileService, TechnicalSupervisorProfileService>();
+            services.AddScoped<IUserService, UserService>();
 
             return services;
         }
@@ -216,7 +260,6 @@ namespace Renoza.Domain.DI
                 // Регистрируем валидаторы
                 services.AddSingleton<PasswordValidator>();
 
-                services.AddScoped<IUserService, UserService>();
                 services.AddScoped<IPasswordService, PasswordService>();
             }
             return services;
@@ -275,6 +318,16 @@ namespace Renoza.Domain.DI
                             return new ResilienceHandler(pipeline);
                         });
                 }
+                if (configuration.GetSection("CompanyVerificationBroker").Exists())
+                {
+                    // Регистрируем настройки брокера верификации компаний
+                    var companyVerificationBrokerOptions = configuration.GetRequiredConfigurationSection<CompanyVerificationBrokerOptions>("CompanyVerificationBroker");
+                    services.Configure<CompanyVerificationBrokerOptions>(configuration.GetSection("CompanyVerificationBroker"));
+                    services.AddSingleton(companyVerificationBrokerOptions);
+
+                    // Регистрируем HttpClient для DaDataApiService
+                    services.AddHttpClient<IDaDataApiService, DaDataApiService>();
+                }
                 if (configuration.GetSection("QueueOptions").Exists())
                 {
                     var queueOptions = configuration.GetRequiredConfigurationSection<QueueOptions>("QueueOptions");
@@ -283,6 +336,9 @@ namespace Renoza.Domain.DI
 
                     services.AddScoped<IReceiptService, ReceiptService>();
                     services.AddScoped<ICashReceiptJobService, CashReceiptJobService>();
+
+                    // Регистрируем сервисы профилей (зависят от QueueOptions)
+                    services.AddProfileServices();
                 }
 
                 // Регистрируем настройки Retry для MassTransit Consumers

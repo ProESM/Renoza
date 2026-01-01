@@ -94,93 +94,93 @@ namespace Renoza.DbMigration.Profile
 
             //    // Назначаем роль администратора
             //    Insert.IntoTable("UserRoles")
-            //        .InSchema("auth")
-            //        .Row(new
-            //        {
-            //            UserId = userId,
-            //            RoleId = roleId,
-            //            IsActive = true,
-            //            CreatedAt = now,
-            //            UpdatedAt = now
-            //        });
+            //    .InSchema("auth")
+            //    .Row(new
+            //    {
+            //        UserId = userId,
+            //        RoleId = roleId,
+            //        IsActive = true,
+            //        CreatedAt = now,
+            //        UpdatedAt = now
+            //    });
 
-            //    // Получаем ID роли Customer
-            //    var customerRoleMember = Role.Customer.GetType()
-            //        .GetMember(Role.Customer.ToString())
-            //        .First();
-            //    var customerRoleId = ((RoleDetailsAttribute)customerRoleMember
-            //        .GetCustomAttributes(typeof(RoleDetailsAttribute), false)
-            //        .First())
-            //        .Id;
+            //    //// Получаем ID роли Customer
+            //    //var customerRoleMember = Role.Customer.GetType()
+            //    //    .GetMember(Role.Customer.ToString())
+            //    //    .First();
+            //    //var customerRoleId = ((RoleDetailsAttribute)customerRoleMember
+            //    //    .GetCustomAttributes(typeof(RoleDetailsAttribute), false)
+            //    //    .First())
+            //    //    .Id;
 
-            //    // Назначаем роль заказчика
-            //    Insert.IntoTable("UserRoles")
-            //        .InSchema("auth")
-            //        .Row(new
-            //        {
-            //            UserId = userId,
-            //            RoleId = customerRoleId,
-            //            IsActive = true,
-            //            CreatedAt = now,
-            //            UpdatedAt = now
-            //        });
+            //    //// Назначаем роль заказчика
+            //    //Insert.IntoTable("UserRoles")
+            //    //    .InSchema("auth")
+            //    //    .Row(new
+            //    //    {
+            //    //        UserId = userId,
+            //    //        RoleId = customerRoleId,
+            //    //        IsActive = true,
+            //    //        CreatedAt = now,
+            //    //        UpdatedAt = now
+            //    //    });
 
-            //    // Получаем ID роли Worker
-            //    var workerRoleMember = Role.Worker.GetType()
-            //        .GetMember(Role.Worker.ToString())
-            //        .First();
-            //    var workerRoleId = ((RoleDetailsAttribute)workerRoleMember
-            //        .GetCustomAttributes(typeof(RoleDetailsAttribute), false)
-            //        .First())
-            //        .Id;
+            //    //// Получаем ID роли Worker
+            //    //var workerRoleMember = Role.Worker.GetType()
+            //    //    .GetMember(Role.Worker.ToString())
+            //    //    .First();
+            //    //var workerRoleId = ((RoleDetailsAttribute)workerRoleMember
+            //    //    .GetCustomAttributes(typeof(RoleDetailsAttribute), false)
+            //    //    .First())
+            //    //    .Id;
 
-            //    // Назначаем роль работника
-            //    Insert.IntoTable("UserRoles")
-            //        .InSchema("auth")
-            //        .Row(new
-            //        {
-            //            UserId = userId,
-            //            RoleId = workerRoleId,
-            //            IsActive = true,
-            //            CreatedAt = now,
-            //            UpdatedAt = now
-            //        });
+            //    //// Назначаем роль работника
+            //    //Insert.IntoTable("UserRoles")
+            //    //    .InSchema("auth")
+            //    //    .Row(new
+            //    //    {
+            //    //        UserId = userId,
+            //    //        RoleId = workerRoleId,
+            //    //        IsActive = true,
+            //    //        CreatedAt = now,
+            //    //        UpdatedAt = now
+            //    //    });
 
-            //    // Создаем профиль заказчика
-            //    Insert.IntoTable("CustomerProfiles")
-            //        .InSchema("public")
-            //        .Row(new
-            //        {
-            //            Id = Guid.NewGuid(),
-            //            UserId = userId,
-            //            CompanyName = "ООО Тестовая компания",
-            //            TaxId = "1234567890",
-            //            BillingAddress = "г. Москва, ул. Тестовая, д. 1",
-            //            CreditLimit = 100000.00m,
-            //            IsActive = true,
-            //            CreatedAt = now,
-            //            UpdatedAt = now
-            //        });
+            //    //// Создаем профиль заказчика
+            //    //Insert.IntoTable("CustomerProfiles")
+            //    //    .InSchema("public")
+            //    //    .Row(new
+            //    //    {
+            //    //        Id = Guid.NewGuid(),
+            //    //        UserId = userId,
+            //    //        CompanyName = "ООО Тестовая компания",
+            //    //        TaxId = "1234567890",
+            //    //        BillingAddress = "г. Москва, ул. Тестовая, д. 1",
+            //    //        CreditLimit = 100000.00m,
+            //    //        IsActive = true,
+            //    //        CreatedAt = now,
+            //    //        UpdatedAt = now
+            //    //    });
 
-            //    // Создаем профиль работника
-            //    var certificationsArray = new[] { "Сертификат электрика", "Сертификат сантехника" };
-            //    var certificationsAsString = "{\"" + string.Join("\",\"", certificationsArray) + "\"}";
-            //    Insert.IntoTable("WorkerProfiles")
-            //        .InSchema("public")
-            //        .Row(new
-            //        {
-            //            Id = Guid.NewGuid(),
-            //            UserId = userId,
-            //            Specialization = "Универсальный специалист",
-            //            TeamSize = 3,
-            //            Certifications = certificationsAsString,
-            //            ProfessionalStartDate = new DateTime(2015, 1, 1),
-            //            IsAvailable = true,
-            //            Rating = 4.8m,
-            //            IsActive = true,
-            //            CreatedAt = now,
-            //            UpdatedAt = now
-            //        });
+            //    //// Создаем профиль работника
+            //    //var certificationsArray = new[] { "Сертификат электрика", "Сертификат сантехника" };
+            //    //var certificationsAsString = "{\"" + string.Join("\",\"", certificationsArray) + "\"}";
+            //    //Insert.IntoTable("WorkerProfiles")
+            //    //    .InSchema("public")
+            //    //    .Row(new
+            //    //    {
+            //    //        Id = Guid.NewGuid(),
+            //    //        UserId = userId,
+            //    //        Specialization = "Универсальный специалист",
+            //    //        TeamSize = 3,
+            //    //        Certifications = certificationsAsString,
+            //    //        ProfessionalStartDate = new DateTime(2015, 1, 1),
+            //    //        IsAvailable = true,
+            //    //        Rating = 4.8m,
+            //    //        IsActive = true,
+            //    //        CreatedAt = now,
+            //    //        UpdatedAt = now
+            //    //    });
             //}
         }
 

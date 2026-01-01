@@ -75,6 +75,10 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// </summary>
         public virtual ICollection<WorkerProfileDao> WorkerProfiles { get; set; } = null!;
         /// <summary>
+        /// Навигационное свойство: связи с профилями технического надзора
+        /// </summary>
+        public virtual ICollection<TechnicalSupervisorProfileDao> TechnicalSupervisorProfiles { get; set; } = null!;
+        /// <summary>
         /// Навигационное свойство: связи с верификациями email
         /// </summary>
         public virtual ICollection<EmailVerificationDao> EmailVerifications { get; set; } = null!;

@@ -29,6 +29,14 @@ namespace Renoza.Domain.Entities.Profiles
         public Guid UserId { get; set; }
 
         /// <summary>
+        /// Идентификатор профиля компании
+        /// </summary>
+        [Display(Name = "Идентификатор профиля компании")]
+        [DataMember]
+        [JsonProperty(PropertyName = "CompanyProfileId")]
+        public Guid CompanyProfileId { get; set; }
+
+        /// <summary>
         /// Специализация работника
         /// </summary>
         [Display(Name = "Специализация")]

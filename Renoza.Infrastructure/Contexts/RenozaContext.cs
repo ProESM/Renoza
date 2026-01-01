@@ -75,6 +75,34 @@ namespace Renoza.Infrastructure.Contexts
         /// История изменений статусов запросов на загрузку чеков
         /// </summary>
         public DbSet<CashReceiptJobHistoryDao> CashReceiptJobHistory { get; set; }
+        /// <summary>
+        /// Типы компаний
+        /// </summary>
+        public DbSet<CompanyTypeDao> CompanyTypes { get; set; }
+        /// <summary>
+        /// Профили компаний
+        /// </summary>
+        public DbSet<CompanyProfileDao> CompanyProfiles { get; set; }
+        /// <summary>
+        /// Результаты верификации компаний
+        /// </summary>
+        public DbSet<CompanyVerificationDao> CompanyVerifications { get; set; }
+        /// <summary>
+        /// Статусы заданий на верификацию компаний
+        /// </summary>
+        public DbSet<CompanyVerificationJobStatusDao> CompanyVerificationJobStatuses { get; set; }
+        /// <summary>
+        /// Задания на верификацию компаний
+        /// </summary>
+        public DbSet<CompanyVerificationJobDao> CompanyVerificationJobs { get; set; }
+        /// <summary>
+        /// История изменений статусов заданий на верификацию компаний
+        /// </summary>
+        public DbSet<CompanyVerificationJobHistoryDao> CompanyVerificationJobHistory { get; set; }
+        /// <summary>
+        /// Профили технического надзора
+        /// </summary>
+        public DbSet<TechnicalSupervisorProfileDao> TechnicalSupervisorProfiles { get; set; }
 
         #endregion
 
@@ -118,6 +146,14 @@ namespace Renoza.Infrastructure.Contexts
             modelBuilder.Entity<CashReceiptJobDao>().ToTable("CashReceiptJobs", "public");
             modelBuilder.Entity<CashReceiptJobStatusDao>().ToTable("CashReceiptJobStatuses", "public");
             modelBuilder.Entity<CashReceiptJobHistoryDao>().ToTable("CashReceiptJobHistory", "public");
+
+            modelBuilder.Entity<CompanyTypeDao>().ToTable("CompanyTypes", "public");
+            modelBuilder.Entity<CompanyProfileDao>().ToTable("CompanyProfiles", "public");
+            modelBuilder.Entity<CompanyVerificationDao>().ToTable("CompanyVerifications", "public");
+            modelBuilder.Entity<CompanyVerificationJobStatusDao>().ToTable("CompanyVerificationJobStatuses", "public");
+            modelBuilder.Entity<CompanyVerificationJobDao>().ToTable("CompanyVerificationJobs", "public");
+            modelBuilder.Entity<CompanyVerificationJobHistoryDao>().ToTable("CompanyVerificationJobHistory", "public");
+            modelBuilder.Entity<TechnicalSupervisorProfileDao>().ToTable("TechnicalSupervisorProfiles", "public");
 
             #endregion
 
@@ -271,6 +307,66 @@ namespace Renoza.Infrastructure.Contexts
 
             #endregion
 
+            #region CompanyTypeDao
+
+            modelBuilder.Entity<CompanyTypeDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyProfileDao
+
+            modelBuilder.Entity<CompanyProfileDao>()
+                .HasKey(x => x.Id);
+
+            // Связь CompanyProfile -> CompanyType (many-to-one)
+            modelBuilder.Entity<CompanyProfileDao>()
+                .HasOne(cp => cp.CompanyType)
+                .WithMany(ct => ct.CompanyProfiles)
+                .HasForeignKey(cp => cp.CompanyTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            #endregion
+
+            #region CompanyVerificationDao
+
+            modelBuilder.Entity<CompanyVerificationDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyVerificationJobStatusDao
+
+            modelBuilder.Entity<CompanyVerificationJobStatusDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyVerificationJobDao
+
+            modelBuilder.Entity<CompanyVerificationJobDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyVerificationJobHistoryDao
+
+            modelBuilder.Entity<CompanyVerificationJobHistoryDao>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<CompanyVerificationJobHistoryDao>()
+                .Property(x => x.Id)
+                .ValueGeneratedOnAdd(); // Configures 'Id' to be auto-generated on add
+
+            #endregion
+
+            #region TechnicalSupervisorProfileDao
+
+            modelBuilder.Entity<TechnicalSupervisorProfileDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
             #endregion
 
             #endregion
@@ -364,6 +460,12 @@ namespace Renoza.Infrastructure.Contexts
                 .HasForeignKey(x => x.UserId)
                 .IsRequired();
 
+            modelBuilder.Entity<WorkerProfileDao>()
+                .HasOne(x => x.CompanyProfile)
+                .WithMany(x => x.WorkerProfiles)
+                .HasForeignKey(x => x.CompanyProfileId)
+                .IsRequired();
+
             #endregion
 
             #region CashReceiptDao
@@ -416,6 +518,77 @@ namespace Renoza.Infrastructure.Contexts
                 .HasOne(x => x.CashReceipt)
                 .WithMany(x => x.CustomerCashReceipts)
                 .HasForeignKey(x => x.CashReceiptId)
+                .IsRequired();
+
+            #endregion
+
+            #region CompanyProfileDao
+
+            // Связь CompanyProfile -> CompanyVerifications (one-to-many)
+            // Настраивается через CompanyVerificationDao.CompanyProfile
+
+            #endregion
+
+            #region CompanyVerificationDao
+
+            modelBuilder.Entity<CompanyVerificationDao>()
+                .HasOne(x => x.CompanyProfile)
+                .WithMany(x => x.CompanyVerifications)
+                .HasForeignKey(x => x.CompanyProfileId)
+                .IsRequired();
+
+            #endregion
+
+            #region CompanyVerificationJobDao
+
+            modelBuilder.Entity<CompanyVerificationJobDao>()
+                .HasOne(x => x.CompanyProfile)
+                .WithMany(x => x.CompanyVerificationJobs)
+                .HasForeignKey(x => x.CompanyProfileId)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyVerificationJobDao>()
+                .HasOne(x => x.Status)
+                .WithMany(x => x.Jobs)
+                .HasForeignKey(x => x.StatusId)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyVerificationJobDao>()
+                .HasOne(x => x.CompanyVerification)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyVerificationId)
+                .IsRequired(false);
+
+            #endregion
+
+            #region CompanyVerificationJobHistoryDao
+
+            modelBuilder.Entity<CompanyVerificationJobHistoryDao>()
+                .HasOne(x => x.Job)
+                .WithMany(x => x.History)
+                .HasForeignKey(x => x.JobId)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyVerificationJobHistoryDao>()
+                .HasOne(x => x.Status)
+                .WithMany()
+                .HasForeignKey(x => x.StatusId)
+                .IsRequired();
+
+            #endregion
+
+            #region TechnicalSupervisorProfileDao
+
+            modelBuilder.Entity<TechnicalSupervisorProfileDao>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.TechnicalSupervisorProfiles)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<TechnicalSupervisorProfileDao>()
+                .HasOne(x => x.CompanyProfile)
+                .WithMany(x => x.TechnicalSupervisorProfiles)
+                .HasForeignKey(x => x.CompanyProfileId)
                 .IsRequired();
 
             #endregion

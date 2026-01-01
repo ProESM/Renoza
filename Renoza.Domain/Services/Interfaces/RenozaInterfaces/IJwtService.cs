@@ -12,8 +12,9 @@ namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces
         /// Генерация JWT токена для пользователя
         /// </summary>
         /// <param name="user">Пользователь</param>
+        /// <param name="roleId">Идентификатор роли для текущей сессии</param>
         /// <returns>JWT токен и время истечения</returns>
-        (string Token, DateTime ExpiresAt) GenerateToken(User user);
+        (string Token, DateTime ExpiresAt) GenerateToken(User user, Guid roleId);
 
         /// <summary>
         /// Валидация JWT токена
