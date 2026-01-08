@@ -2,6 +2,7 @@ using AutoMapper;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Renoza.Domain.Constants.Company;
 using Renoza.Domain.Entities.Profiles;
 using Renoza.Domain.Messages.CompanyVerification;
 using Renoza.Domain.Options;
@@ -40,6 +41,16 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         private readonly ICompanyVerificationJobService _companyVerificationJobService;
 
         /// <summary>
+        /// Сервис для работы с участниками компаний
+        /// </summary>
+        private readonly ICompanyMemberService _companyMemberService;
+
+        /// <summary>
+        /// Сервис для работы с запросами на вступление в компанию
+        /// </summary>
+        private readonly ICompanyJoinRequestService _companyJoinRequestService;
+
+        /// <summary>
         /// Шина сообщений MassTransit
         /// </summary>
         private readonly IBus _bus;
@@ -72,6 +83,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="workerProfileRepository">Репозиторий профилей работников</param>
         /// <param name="companyProfileService">Сервис для работы с профилями компаний</param>
         /// <param name="companyVerificationJobService">Сервис для работы с заданиями на верификацию</param>
+        /// <param name="companyMemberService">Сервис для работы с участниками компаний</param>
+        /// <param name="companyJoinRequestService">Сервис для работы с запросами на вступление в компанию</param>
         /// <param name="bus">Шина сообщений MassTransit</param>
         /// <param name="queueOptions">Настройки очередей</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
@@ -81,6 +94,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             IEntityWithIdRepository<WorkerProfileDao, Guid> workerProfileRepository,
             ICompanyProfileService companyProfileService,
             ICompanyVerificationJobService companyVerificationJobService,
+            ICompanyMemberService companyMemberService,
+            ICompanyJoinRequestService companyJoinRequestService,
             IBus bus,
             QueueOptions queueOptions,
             IMapper mapper,
@@ -89,6 +104,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             _workerProfileRepository = workerProfileRepository;
             _companyProfileService = companyProfileService;
             _companyVerificationJobService = companyVerificationJobService;
+            _companyMemberService = companyMemberService;
+            _companyJoinRequestService = companyJoinRequestService;
             _bus = bus;
             _queueOptions = queueOptions;
             _mapper = mapper;
@@ -187,7 +204,6 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                CompanyProfileId = companyProfile.Id,
                 IsAvailable = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
@@ -197,7 +213,42 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             await _workerProfileRepository.CreateAsync(workerProfileDao, cancellationToken);
             await SaveChangesAsync(cancellationToken);
 
-            // 3. Создаем задание на верификацию компании, если:
+            // 3. Проверяем, есть ли участники в компании
+            var companyMembers = await _companyMemberService.GetCompanyMembersAsync(companyProfile.Id, cancellationToken);
+            if (companyMembers.IsSuccess && companyMembers.Data!.Count == 0)
+            {
+                // TODO: Нужно подумать, как проверить, что пользователь является владельцем компании
+
+                // Компания новая - делаем пользователя Owner'ом
+                var addCompanyMemberResult = await _companyMemberService.AddMemberAsync(
+                    userId,
+                    companyProfile.Id,
+                    CompanyMemberRoleIds.Owner,
+                    cancellationToken: cancellationToken);
+
+                if (!addCompanyMemberResult.IsSuccess)
+                {
+                    _logger.LogWarning("Не удалось добавить пользователя {UserId} как Owner компании {CompanyId}: {ErrorMessage}",
+                        userId, companyProfile.Id, addCompanyMemberResult.ErrorMessage);
+                }
+            }
+            else
+            {
+                // Компания уже существует - создаем запрос на вступление
+                var companyJoinRequestResult = await _companyJoinRequestService.CreateJoinRequestAsync(
+                    userId,
+                    companyProfile.Id,
+                    "Запрос на вступление при регистрации",
+                    cancellationToken);
+
+                if (!companyJoinRequestResult.IsSuccess)
+                {
+                    _logger.LogWarning("Не удалось создать запрос на вступление для пользователя {UserId} в компанию {CompanyId}: {ErrorMessage}",
+                        userId, companyProfile.Id, companyJoinRequestResult.ErrorMessage);
+                }
+            }
+
+            // 4. Создаем задание на верификацию компании, если:
             //    - компания еще не верифицирована
             //    - нет активного задания на верификацию
             if (!companyProfile.IsCompanyVerified)

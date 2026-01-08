@@ -19,7 +19,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         {
             _logger = logger;
 
-            // TODO надо оценить, купить лицензию или поискать альтернативу
+            // TODO: надо оценить, купить лицензию или поискать альтернативу
             // Устанавливаем лицензию QuestPDF (Community License для некоммерческого использования)
             QuestPDF.Settings.License = LicenseType.Community;
 

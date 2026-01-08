@@ -1,5 +1,7 @@
-﻿using System.Data;
-using FluentMigrator;
+﻿using FluentMigrator;
+using Renoza.DbMigration.Attributes;
+using System.Data;
+using Renoza.DbMigration.Enums;
 
 namespace Renoza.DbMigration.Migration
 {
@@ -15,84 +17,6 @@ namespace Renoza.DbMigration.Migration
 
             #region Таблицы и представления
 
-            #region Схема auth
-
-            #region Таблицы
-
-            if (!Schema.Schema("auth").Exists())
-            {
-                Create.Schema("auth");
-            }
-
-            if (!Schema.Schema("auth").Table("Users").Exists())
-            {
-                Create.Table("Users")
-                    .InSchema("auth")
-                    .WithColumn("Id").AsGuid().PrimaryKey()
-                    .WithColumn("Name").AsString(256).NotNullable().Unique()
-                    .WithColumn("DisplayName").AsString(256).NotNullable()
-                    .WithColumn("Email").AsString(256).NotNullable().Unique()
-                    .WithColumn("IsEmailVerified").AsBoolean().NotNullable().WithDefaultValue(false)
-                    .WithColumn("PhoneNumber").AsString(50).NotNullable().Unique()
-                    .WithColumn("PhoneCountryCode").AsString(6).NotNullable()
-                    .WithColumn("IsPhoneNumberVerified").AsBoolean().NotNullable().WithDefaultValue(false)
-                    .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(false)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
-            }
-
-            if (!Schema.Schema("auth").Table("UserPasswords").Exists())
-            {
-                Create.Table("UserPasswords")
-                    .InSchema("auth")
-                    .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-                    .WithColumn("UserId").AsGuid().Nullable().ForeignKey("FK_UserPasswords_UserId", "auth", "Users", "Id").OnDelete(Rule.Cascade)
-                    .WithColumn("PasswordHash").AsString(256).NotNullable()
-                    .WithColumn("PasswordSalt").AsString(256).NotNullable()
-                    .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(false)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("ExpiredAt").AsCustom("timestamp with time zone").Nullable();
-
-                Create.Index("IDX_UserPasswords_UserId")
-                    .OnTable("UserPasswords")
-                    .InSchema("auth")
-                    .OnColumn("UserId");
-
-                Execute.Sql(@"
-                    CREATE UNIQUE INDEX ""UC_UserPasswords_UserId_IsActive""
-                    ON auth.""UserPasswords"" (""UserId"", ""IsActive"")
-                    WHERE ""IsActive"" = true;
-                ");
-            }
-
-            if (!Schema.Schema("auth").Table("UserPasswordHistory").Exists())
-            {
-                Create.Table("UserPasswordHistory")
-                    .InSchema("auth")
-                    .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-                    .WithColumn("UserId").AsGuid().Nullable().ForeignKey("FK_UserPasswordHistory_UserId", "auth", "Users", "Id")
-                    .OnDelete(Rule.Cascade)
-                    .WithColumn("PasswordHash").AsString(256).NotNullable()
-                    .WithColumn("UsedFromAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UsedToAt").AsCustom("timestamp with time zone").Nullable()
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
-
-                Create.Index("IDX_UserPasswordHistory_UserId")
-                    .OnTable("UserPasswordHistory")
-                    .InSchema("auth")
-                    .OnColumn("UserId");
-            }
-
-            #endregion
-
-            #region Представления
-
-
-
-            #endregion
-
-            #endregion
-
             #region Схема public
 
             #region Таблицы
@@ -105,8 +29,7 @@ namespace Renoza.DbMigration.Migration
                     .WithColumn("Name").AsString(256).NotNullable()
                     .WithColumn("Code").AsString(3).NotNullable().Unique()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(false)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
             }
             if (!Schema.Schema("public").Table("PhoneCountryCodes").Exists())
             {
@@ -123,6 +46,9 @@ namespace Renoza.DbMigration.Migration
                     .InSchema("public")
                     .OnColumn("CountryId");
             }
+
+            // Предзаполняем данные
+            InsertPrepopulatedData();
 
             #endregion
 
@@ -151,44 +77,41 @@ namespace Renoza.DbMigration.Migration
             }
 
             #endregion
+        }
 
-            #region Схема auth
-
-            if (Schema.Schema("auth").Table("UserPasswordHistory").Exists())
+        /// <summary>
+        /// Предзаполняет данные
+        /// </summary>
+        private void InsertPrepopulatedData()
+        {
+            if (Schema.Schema("public").Table("Countries").Exists())
             {
-                if (Schema.Schema("auth").Table("UserPasswordHistory").Index("IDX_UserPasswordHistory_UserId").Exists())
+                var now = DateTime.UtcNow;
+                var countries = typeof(Country).GetMembers()
+                    .Select(x => x.GetCustomAttributes(typeof(CountryDetailsAttribute), false))
+                    .SelectMany(x => x.Cast<CountryDetailsAttribute>());
+
+                foreach (var country in countries)
                 {
-                    Delete.Index("IDX_UserPasswordHistory_UserId").OnTable("UserPasswordHistory").InSchema("auth");
+                    Insert.IntoTable("Countries")
+                        .InSchema("public")
+                        .Row(new
+                        {
+                            Name = country.Name,
+                            Code = country.Code,
+                            IsActive = country.IsActive,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        });
+
+                    Execute.Sql($@"INSERT INTO public.""PhoneCountryCodes""
+                        (""Code"", ""PhoneFormat"", ""CountryId"")
+                        SELECT '{country.PhoneCountryCode}', '{country.PhoneFormat}', ""Id"" AS ""CountryId""
+                        FROM public.""Countries""
+                        WHERE ""Code"" = '{country.Code}';
+                    ");
                 }
-
-                Delete.Table("UserPasswordHistory").InSchema("auth");
             }
-
-            if (Schema.Schema("auth").Table("UserPasswords").Exists())
-            {
-                if (Schema.Schema("auth").Table("UserPasswords").Index("IDX_UserPasswords_UserId").Exists())
-                {
-                    Delete.Index("IDX_UserPasswords_UserId").OnTable("UserPasswords").InSchema("auth");
-                }
-                if (Schema.Schema("auth").Table("UserPasswords").Index("UC_UserPasswords_UserId_IsActive").Exists())
-                {
-                    Delete.Index("UC_UserPasswords_UserId_IsActive").OnTable("UserPasswords").InSchema("auth");
-                }
-
-                Delete.Table("UserPasswords").InSchema("auth");
-            }
-
-            if (Schema.Schema("auth").Table("Users").Exists())
-            {
-                Delete.Table("Users").InSchema("auth");
-            }
-
-            if (Schema.Schema("auth").Exists())
-            {
-                Delete.Schema("auth");
-            }
-
-            #endregion
         }
     }
 }

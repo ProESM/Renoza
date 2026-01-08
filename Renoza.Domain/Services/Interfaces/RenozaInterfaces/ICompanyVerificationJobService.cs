@@ -1,4 +1,4 @@
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.CompanyVerification;
 
 namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces

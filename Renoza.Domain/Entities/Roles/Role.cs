@@ -21,7 +21,15 @@ namespace Renoza.Domain.Entities.Roles
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Наименование роли
+        /// Уникальный код
+        /// </summary>
+        [Display(Name = "Код")]
+        [DataMember]
+        [JsonProperty(PropertyName = "Code")]
+        public string Code { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Наименование
         /// </summary>
         [Display(Name = "Наименование")]
         [DataMember]
@@ -29,12 +37,12 @@ namespace Renoza.Domain.Entities.Roles
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Описание роли
+        /// Отображаемое наименование
         /// </summary>
-        [Display(Name = "Описание")]
+        [Display(Name = "Отображаемое наименование")]
         [DataMember]
-        [JsonProperty(PropertyName = "Description")]
-        public string? Description { get; set; }
+        [JsonProperty(PropertyName = "DisplayName")]
+        public string? DisplayName { get; set; }
 
         /// <summary>
         /// Признак системной роли (не может быть удалена)
@@ -59,13 +67,5 @@ namespace Renoza.Domain.Entities.Roles
         [DataMember]
         [JsonProperty(PropertyName = "CreatedAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// Дата и время редактирования
-        /// </summary>
-        [Display(Name = "Дата и время редактирования")]
-        [DataMember]
-        [JsonProperty(PropertyName = "UpdatedAt")]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

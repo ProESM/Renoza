@@ -1,6 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.CompanyVerification;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;

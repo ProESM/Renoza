@@ -13,7 +13,6 @@ namespace Renoza.Domain.Mappings
                 .ForMember(p => p.Name, a => a.MapFrom(p => p.Name))
                 .ForMember(p => p.IsActive, a => a.MapFrom(p => p.IsActive))
                 .ForMember(p => p.CreatedAt, a => a.MapFrom(p => DateTime.SpecifyKind(p.CreatedAt, DateTimeKind.Utc)))
-                .ForMember(p => p.UpdatedAt, a => a.MapFrom(p => DateTime.SpecifyKind(p.UpdatedAt, DateTimeKind.Utc)))
                 ;
 
             CreateMap<PhoneCountryCodeDao, PhoneCountryCode>()

@@ -108,16 +108,6 @@ namespace Renoza.Infrastructure.Entities.Renoza
         public virtual ICollection<CompanyVerificationDao> CompanyVerifications { get; set; } = null!;
 
         /// <summary>
-        /// Навигационное свойство к профилям ремонтных бригад
-        /// </summary>
-        public virtual ICollection<WorkerProfileDao> WorkerProfiles { get; set; } = null!;
-
-        /// <summary>
-        /// Навигационное свойство к профилям технического надзора
-        /// </summary>
-        public virtual ICollection<TechnicalSupervisorProfileDao> TechnicalSupervisorProfiles { get; set; } = null!;
-
-        /// <summary>
         /// Навигационное свойство к заданиям на верификацию
         /// </summary>
         public virtual ICollection<CompanyVerificationJobDao> CompanyVerificationJobs { get; set; } = null!;

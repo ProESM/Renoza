@@ -205,7 +205,7 @@ namespace Renoza.Backend.Controllers
                     {
                         id = r.Id,
                         name = r.Name,
-                        description = r.Description
+                        displayName = r.DisplayName
                     })
                 });
             }

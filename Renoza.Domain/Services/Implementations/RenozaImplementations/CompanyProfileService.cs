@@ -1,6 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.CompanyProfiles;
 using Renoza.Domain.Services.Implementations.BaseImplementations;
 using Renoza.Domain.Services.Interfaces.RenozaInterfaces;
@@ -15,9 +15,22 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CompanyProfileService : BaseService<RenozaContext>, ICompanyProfileService
     {
+        /// <summary>
+        /// Репозиторий для работы с профилями компаний
+        /// </summary>
         private readonly IEntityWithIdRepository<CompanyProfileDao, Guid> _companyProfileRepository;
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
         private readonly IMapper _mapper;
 
+        /// <summary>
+        /// Сервис для работы с профилями компаний
+        /// </summary>
+        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="companyProfileRepository">Репозиторий для работы с профилями компаний</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public CompanyProfileService(
             RenozaContext dbContext,
             IEntityWithIdRepository<CompanyProfileDao, Guid> companyProfileRepository,
@@ -39,12 +52,12 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             try
             {
                 // Проверяем, нет ли уже профиля с таким ИНН
-                var existing = await _companyProfileRepository.GetQueryable()
+                var existingCompanyProfileDao = await _companyProfileRepository.GetQueryable()
                     .FirstOrDefaultAsync(cp => cp.Inn == inn, cancellationToken);
 
-                if (existing != null)
+                if (existingCompanyProfileDao != null)
                 {
-                    return Result<CompanyProfile>.Success(_mapper.Map<CompanyProfile>(existing));
+                    return Result<CompanyProfile>.Success(_mapper.Map<CompanyProfile>(existingCompanyProfileDao));
                 }
 
                 var companyProfileDao = new CompanyProfileDao

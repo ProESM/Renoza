@@ -5,8 +5,8 @@ using Renoza.DbMigration.Enums;
 
 namespace Renoza.DbMigration.Migration
 {
-    [Migration(2025122101, "Добавление таблиц верификации компаний и профиля технического надзора")]
-    public class AddCompanyVerificationTables : FluentMigrator.Migration
+    [Migration(2025110903, "Добавление таблиц профилей компаний и верификации компаний")]
+    public class AddCompanyAndCompanyVerificationTables : FluentMigrator.Migration
     {
         public override void Up()
         {
@@ -18,10 +18,11 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("CompanyTypes")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
                 // Добавляем начальные типы из Enum
                 var now = DateTime.UtcNow;
@@ -36,10 +37,11 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = companyType.Id,
+                            Code = companyType.Code,
                             Name = companyType.Name,
+                            DisplayName = companyType.DisplayName,
                             IsActive = companyType.IsActive,
-                            CreatedAt = now,
-                            UpdatedAt = now
+                            CreatedAt = now
                         });
                 }
             }
@@ -50,10 +52,11 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("CompanyVerificationJobStatuses")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
                 // Добавляем начальные статусы из Enum
                 var now = DateTime.UtcNow;
@@ -68,10 +71,11 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = status.Id,
+                            Code = status.Code,
                             Name = status.Name,
+                            DisplayName = status.DisplayName,
                             IsActive = status.IsActive,
-                            CreatedAt = now,
-                            UpdatedAt = now
+                            CreatedAt = now
                         });
                 }
             }
@@ -107,39 +111,6 @@ namespace Renoza.DbMigration.Migration
                     .OnTable("CompanyProfiles")
                     .InSchema("public")
                     .OnColumn("IsCompanyVerified");
-            }
-
-            // Таблица профилей технического надзора
-            if (!Schema.Schema("public").Table("TechnicalSupervisorProfiles").Exists())
-            {
-                Create.Table("TechnicalSupervisorProfiles")
-                    .InSchema("public")
-                    .WithColumn("Id").AsGuid().PrimaryKey()
-                    .WithColumn("UserId").AsGuid().NotNullable()
-                    .WithColumn("CompanyProfileId").AsGuid().NotNullable().ForeignKey("FK_TechnicalSupervisorProfiles_CompanyProfileId", "public", "CompanyProfiles", "Id").OnDelete(Rule.None)
-                    .WithColumn("Specialization").AsString(256).Nullable()
-                    .WithColumn("Certifications").AsCustom("text[]").Nullable()
-                    .WithColumn("ProfessionalStartDate").AsDate().Nullable()
-                    .WithColumn("IsAvailable").AsBoolean().NotNullable().WithDefaultValue(true)
-                    .WithColumn("Rating").AsDecimal().Nullable()
-                    .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
-
-                Create.Index("IDX_TechnicalSupervisorProfiles_UserId")
-                    .OnTable("TechnicalSupervisorProfiles")
-                    .InSchema("public")
-                    .OnColumn("UserId");
-
-                Create.Index("IDX_TechnicalSupervisorProfiles_CompanyProfileId")
-                    .OnTable("TechnicalSupervisorProfiles")
-                    .InSchema("public")
-                    .OnColumn("CompanyProfileId");
-
-                Create.Index("IDX_TechnicalSupervisorProfiles_IsActive")
-                    .OnTable("TechnicalSupervisorProfiles")
-                    .InSchema("public")
-                    .OnColumn("IsActive");
             }
 
             // Таблица результатов верификации компаний
@@ -241,23 +212,6 @@ namespace Renoza.DbMigration.Migration
                     .OnColumn("CreatedAt").Descending();
             }
 
-            // Добавляем поля в WorkerProfiles
-            if (Schema.Schema("public").Table("WorkerProfiles").Exists())
-            {
-                if (!Schema.Schema("public").Table("WorkerProfiles").Column("CompanyProfileId").Exists())
-                {
-                    Alter.Table("WorkerProfiles")
-                        .InSchema("public")
-                        .AddColumn("CompanyProfileId").AsGuid().NotNullable()
-                        .ForeignKey("FK_WorkerProfiles_CompanyProfileId", "public", "CompanyProfiles", "Id").OnDelete(Rule.None);
-
-                    Create.Index("IDX_WorkerProfiles_CompanyProfileId")
-                        .OnTable("WorkerProfiles")
-                        .InSchema("public")
-                        .OnColumn("CompanyProfileId");
-                }
-            }
-
             #endregion
         }
 
@@ -302,29 +256,6 @@ namespace Renoza.DbMigration.Migration
                     Delete.Index("IDX_CompanyVerifications_CompanyProfileId").OnTable("CompanyVerifications").InSchema("public");
 
                 Delete.Table("CompanyVerifications").InSchema("public");
-            }
-
-            // Удаляем таблицу профилей технического надзора
-            if (Schema.Schema("public").Table("TechnicalSupervisorProfiles").Exists())
-            {
-                if (Schema.Schema("public").Table("TechnicalSupervisorProfiles").Index("IDX_TechnicalSupervisorProfiles_IsActive").Exists())
-                    Delete.Index("IDX_TechnicalSupervisorProfiles_IsActive").OnTable("TechnicalSupervisorProfiles").InSchema("public");
-                if (Schema.Schema("public").Table("TechnicalSupervisorProfiles").Index("IDX_TechnicalSupervisorProfiles_CompanyProfileId").Exists())
-                    Delete.Index("IDX_TechnicalSupervisorProfiles_CompanyProfileId").OnTable("TechnicalSupervisorProfiles").InSchema("public");
-                if (Schema.Schema("public").Table("TechnicalSupervisorProfiles").Index("IDX_TechnicalSupervisorProfiles_UserId").Exists())
-                    Delete.Index("IDX_TechnicalSupervisorProfiles_UserId").OnTable("TechnicalSupervisorProfiles").InSchema("public");
-
-                Delete.Table("TechnicalSupervisorProfiles").InSchema("public");
-            }
-
-            // Удаляем поля из WorkerProfiles
-            if (Schema.Schema("public").Table("WorkerProfiles").Exists())
-            {
-                if (Schema.Schema("public").Table("WorkerProfiles").Index("IDX_WorkerProfiles_CompanyProfileId").Exists())
-                    Delete.Index("IDX_WorkerProfiles_CompanyProfileId").OnTable("WorkerProfiles").InSchema("public");
-
-                if (Schema.Schema("public").Table("WorkerProfiles").Column("CompanyProfileId").Exists())
-                    Delete.Column("CompanyProfileId").FromTable("WorkerProfiles").InSchema("public");
             }
 
             // Удаляем таблицу профилей компаний

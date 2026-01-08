@@ -1,4 +1,4 @@
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.Documents;
 using Renoza.Domain.Services.Interfaces.BaseInterfaces;
 using Renoza.Infrastructure.Contexts;

@@ -18,10 +18,11 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("CashReceiptJobStatuses")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
-                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime)
-                    .WithColumn("UpdatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+                    .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
                 // Добавляем начальные статусы из Enum
                 var now = DateTime.UtcNow;
@@ -36,10 +37,11 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = status.Id,
+                            Code = status.Code,
                             Name = status.Name,
+                            DisplayName = status.DisplayName,
                             IsActive = status.IsActive,
-                            CreatedAt = now,
-                            UpdatedAt = now
+                            CreatedAt = now
                         });
                 }
             }

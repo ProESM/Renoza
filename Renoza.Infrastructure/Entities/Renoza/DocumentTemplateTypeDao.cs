@@ -9,10 +9,22 @@ namespace Renoza.Infrastructure.Entities.Renoza
     public class DocumentTemplateTypeDao : EntityWithIdDao<short>
     {
         /// <summary>
+        /// Уникальный код
+        /// </summary>
+        [MaxLength(50)]
+        public string Code { get; set; } = string.Empty;
+
+        /// <summary>
         /// Наименование типа шаблона
         /// </summary>
         [MaxLength(256)]
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Отображаемое наименование
+        /// </summary>
+        [MaxLength(256)]
+        public string? DisplayName { get; set; }
 
         /// <summary>
         /// Признак активности

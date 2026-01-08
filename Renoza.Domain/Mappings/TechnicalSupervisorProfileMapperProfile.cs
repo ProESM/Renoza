@@ -1,6 +1,7 @@
 using AutoMapper;
 using Renoza.Domain.Entities.Profiles;
 using Renoza.Infrastructure.Entities.Renoza;
+using Profile = AutoMapper.Profile;
 
 namespace Renoza.Domain.Mappings
 {

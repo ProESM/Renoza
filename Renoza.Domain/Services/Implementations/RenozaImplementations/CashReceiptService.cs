@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.CashReceipts;
 using Renoza.Domain.Entities.CashReceipts.OfdApi;
 using Renoza.Domain.Enums;

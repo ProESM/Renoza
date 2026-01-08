@@ -1,4 +1,4 @@
-﻿using Renoza.Common.Helpers;
+﻿using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.CashReceipts;
 
 namespace Renoza.Domain.Services.Interfaces.RenozaInterfaces

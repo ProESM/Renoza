@@ -196,6 +196,51 @@ namespace Renoza.Domain.DI
                 var context = serviceProvider.GetRequiredService<RenozaContext>();
                 return new EntityWithIdRepository<TechnicalSupervisorProfileDao, Guid>(context);
             });
+            services.AddScoped<IEntityWithIdRepository<CompanyMemberDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyMemberDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CompanyJoinRequestDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CompanyJoinRequestDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<FavoriteDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<FavoriteDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<ProductCategoryDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<ProductCategoryDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<MeasurementUnitDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<MeasurementUnitDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CurrencyDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CurrencyDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<ProductDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<ProductDao, Guid>(context);
+            });
+            services.AddScoped<IEntityWithIdRepository<CartItemDao, Guid>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityWithIdRepository<CartItemDao, Guid>(context);
+            });
+            services.AddScoped<IEntityRepository<ProfileProductPriceDao>>(serviceProvider =>
+            {
+                var context = serviceProvider.GetRequiredService<RenozaContext>();
+                return new EntityRepository<ProfileProductPriceDao>(context);
+            });
 
             // Регистрируем AutoMapper
             // Сканирует сборку Domain для поиска профилей маппинга (например, UserMapperProfile)
@@ -218,6 +263,16 @@ namespace Renoza.Domain.DI
             services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
             services.AddScoped<ICompanyProfileService, CompanyProfileService>();
             services.AddScoped<ICompanyVerificationJobService, CompanyVerificationJobService>();
+            services.AddScoped<ICompanyMemberService, CompanyMemberService>();
+            services.AddScoped<ICompanyJoinRequestService, CompanyJoinRequestService>();
+            services.AddScoped<IFavoriteService, FavoriteService>();
+            services.AddScoped<ICartItemService, CartItemService>();
+            services.AddScoped<IProductCategoryService, ProductCategoryService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IProfileProductPriceService, ProfileProductPriceService>();
+            services.AddScoped<ICurrencyService, CurrencyService>();
+            services.AddScoped<IMeasurementUnitService, MeasurementUnitService>();
+            services.AddScoped<IMemberRoleService, MemberRoleService>();
 
             return services;
         }

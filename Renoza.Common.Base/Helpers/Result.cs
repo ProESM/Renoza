@@ -1,4 +1,4 @@
-namespace Renoza.Common.Helpers
+namespace Renoza.Common.Base.Helpers
 {
     /// <summary>
     /// Результат выполнения операции

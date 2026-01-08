@@ -26,10 +26,6 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// Дата и время создания
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        /// <summary>
-        /// Дата и время редактирования
-        /// </summary>
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<PhoneCountryCodeDao> PhoneCountryCodes { get; set; } = null!;
     }

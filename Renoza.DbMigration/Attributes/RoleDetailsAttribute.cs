@@ -1,4 +1,4 @@
-﻿namespace Renoza.DbMigration.Attributes
+namespace Renoza.DbMigration.Attributes
 {
     /// <summary>
     /// Атрибут детализации роли
@@ -11,13 +11,17 @@
         /// </summary>
         public Guid Id { get; }
         /// <summary>
+        /// Уникальный код
+        /// </summary>
+        public string Code { get; }
+        /// <summary>
         /// Наименование
         /// </summary>
         public string Name { get; }
         /// <summary>
-        /// Описание
+        /// Отображаемое наименование
         /// </summary>
-        public string Description { get; }
+        public string DisplayName { get; }
         /// <summary>
         /// Признак системной роли (не может быть удалена)
         /// </summary>
@@ -31,15 +35,17 @@
         /// Атрибут детализации роли
         /// </summary>
         /// <param name="id">Идентификатор</param>
+        /// <param name="code">Уникальный код</param>
         /// <param name="name">Наименование</param>
-        /// <param name="description">Описание</param>
+        /// <param name="displayName">Отображаемое наименование</param>
         /// <param name="isSystemRole">Признак системной роли (не может быть удалена)</param>
         /// <param name="isActive">Признак активности</param>
-        public RoleDetailsAttribute(string id, string name, string description, bool isSystemRole, bool isActive)
+        public RoleDetailsAttribute(string id, string code, string name, string displayName, bool isSystemRole, bool isActive)
         {
             Id = new Guid(id);
+            Code = code;
             Name = name;
-            Description = description;
+            DisplayName = displayName;
             IsSystemRole = isSystemRole;
             IsActive = isActive;
         }

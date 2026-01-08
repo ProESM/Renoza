@@ -80,7 +80,7 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CompanyVerificationBroker
                 _logger.LogInformation("Запрос информации о компании через DaData API. INN: {Inn}", message.Inn);
                 //var response = await _daDataApiService.GetCompanyByInnAsync(message.Inn);
 
-                // TODO Временно замокаем данные, но нужно будет убрать, когда подключим внешний сервис
+                // TODO: Временно замокаем данные, но нужно будет убрать, когда подключим внешний сервис
                 var response = GetMockDaDataApiResponse(message.Inn);
 
                 if (response == null || response.Suggestions == null || !response.Suggestions.Any())

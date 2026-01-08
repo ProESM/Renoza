@@ -9,15 +9,20 @@ namespace Renoza.Infrastructure.Entities.Renoza
     public class RoleDao : EntityWithIdDao<Guid>
     {
         /// <summary>
-        /// Наименование роли
+        /// Уникальный код
+        /// </summary>
+        [MaxLength(50)]
+        public string Code { get; set; } = string.Empty;
+        /// <summary>
+        /// Наименование
         /// </summary>
         [MaxLength(256)]
         public string Name { get; set; } = string.Empty;
         /// <summary>
-        /// Описание роли
+        /// Отображаемое наименование
         /// </summary>
         [MaxLength(256)]
-        public string? Description { get; set; }
+        public string? DisplayName { get; set; }
         /// <summary>
         /// Признак системной роли (не может быть удалена)
         /// </summary>
@@ -30,10 +35,6 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// Дата и время создания
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        /// <summary>
-        /// Дата и время редактирования
-        /// </summary>
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Навигационное свойство: связи с пользователями

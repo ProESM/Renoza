@@ -65,9 +65,9 @@ namespace Renoza.Domain.QueueConsumers.Implementations.CashReceiptBroker
                 };
 
                 // Вызываем OFD API
-                var ofdResponse = await _ofdApiService.GetReceiptAsync(ofdRequest); //TODO нужно раскомментировать, когда подключим внешний сервис
+                var ofdResponse = await _ofdApiService.GetReceiptAsync(ofdRequest); // TODO: нужно раскомментировать, когда подключим внешний сервис
 
-                // TODO Временно замокаем данные, но нужно будет убрать, когда подключим внешний сервис
+                // TODO: Временно замокаем данные, но нужно будет убрать, когда подключим внешний сервис
                 //var ofdResponse = GetMockOfdApiResponse();
 
                 if (!ofdResponse.Success || ofdResponse.Data == null)

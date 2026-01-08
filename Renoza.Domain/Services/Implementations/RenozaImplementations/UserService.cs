@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Renoza.Common.Helpers;
+using Renoza.Common.Base.Helpers;
 using Renoza.Domain.Entities.Auth;
 using Renoza.Domain.Entities.Profiles;
 using Renoza.Domain.Entities.Users;

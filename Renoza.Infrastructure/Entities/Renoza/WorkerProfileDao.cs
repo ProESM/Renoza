@@ -14,11 +14,6 @@ namespace Renoza.Infrastructure.Entities.Renoza
         public Guid UserId { get; set; }
 
         /// <summary>
-        /// Идентификатор профиля компании
-        /// </summary>
-        public Guid CompanyProfileId { get; set; }
-
-        /// <summary>
         /// Специализация работника
         /// </summary>
         [MaxLength(256)]
@@ -68,10 +63,5 @@ namespace Renoza.Infrastructure.Entities.Renoza
         /// Навигационное свойство к пользователю
         /// </summary>
         public virtual UserDao User { get; set; } = null!;
-
-        /// <summary>
-        /// Навигационное свойство к профилю компании
-        /// </summary>
-        public virtual CompanyProfileDao CompanyProfile { get; set; } = null!;
     }
 }

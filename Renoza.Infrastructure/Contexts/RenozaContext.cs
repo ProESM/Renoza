@@ -103,6 +103,67 @@ namespace Renoza.Infrastructure.Contexts
         /// Профили технического надзора
         /// </summary>
         public DbSet<TechnicalSupervisorProfileDao> TechnicalSupervisorProfiles { get; set; }
+        /// <summary>
+        /// Роли участников компании
+        /// </summary>
+        public DbSet<MemberRoleDao> MemberRoles { get; set; }
+        /// <summary>
+        /// Участники компаний
+        /// </summary>
+        public DbSet<CompanyMemberDao> CompanyMembers { get; set; }
+        /// <summary>
+        /// Статусы запросов на вступление в компанию
+        /// </summary>
+        public DbSet<CompanyJoinRequestStatusDao> CompanyJoinRequestStatuses { get; set; }
+        /// <summary>
+        /// Запросы на вступление в компанию
+        /// </summary>
+        public DbSet<CompanyJoinRequestDao> CompanyJoinRequests { get; set; }
+
+        /// <summary>
+        /// Избранное
+        /// </summary>
+        public DbSet<FavoriteDao> Favorites { get; set; }
+
+        /// <summary>
+        /// Категории товаров и услуг
+        /// </summary>
+        public DbSet<ProductCategoryDao> ProductCategories { get; set; }
+
+        /// <summary>
+        /// Типы единиц измерения
+        /// </summary>
+        public DbSet<MeasurementUnitTypeDao> MeasurementUnitTypes { get; set; }
+
+        /// <summary>
+        /// Единицы измерения
+        /// </summary>
+        public DbSet<MeasurementUnitDao> MeasurementUnits { get; set; }
+
+        /// <summary>
+        /// Валюты
+        /// </summary>
+        public DbSet<CurrencyDao> Currencies { get; set; }
+
+        /// <summary>
+        /// Товары и услуги
+        /// </summary>
+        public DbSet<ProductDao> Products { get; set; }
+
+        /// <summary>
+        /// Базовые цены профилей на товары/услуги
+        /// </summary>
+        public DbSet<ProfileProductPriceDao> ProfileProductPrices { get; set; }
+
+        /// <summary>
+        /// Переопределенные цены в альтернативных валютах
+        /// </summary>
+        public DbSet<ProfileProductOverridePriceDao> ProfileProductOverridePrices { get; set; }
+
+        /// <summary>
+        /// Корзина покупок
+        /// </summary>
+        public DbSet<CartItemDao> CartItems { get; set; }
 
         #endregion
 
@@ -154,6 +215,25 @@ namespace Renoza.Infrastructure.Contexts
             modelBuilder.Entity<CompanyVerificationJobDao>().ToTable("CompanyVerificationJobs", "public");
             modelBuilder.Entity<CompanyVerificationJobHistoryDao>().ToTable("CompanyVerificationJobHistory", "public");
             modelBuilder.Entity<TechnicalSupervisorProfileDao>().ToTable("TechnicalSupervisorProfiles", "public");
+            modelBuilder.Entity<CompanyMemberDao>().ToTable("CompanyMembers", "public");
+            modelBuilder.Entity<CompanyJoinRequestStatusDao>().ToTable("CompanyJoinRequestStatuses", "public");
+            modelBuilder.Entity<CompanyJoinRequestDao>().ToTable("CompanyJoinRequests", "public");
+            modelBuilder.Entity<FavoriteDao>().ToTable("Favorites", "public");
+
+            modelBuilder.Entity<ProductCategoryDao>().ToTable("ProductCategories", "public");
+            modelBuilder.Entity<MeasurementUnitTypeDao>().ToTable("MeasurementUnitTypes", "public");
+            modelBuilder.Entity<MeasurementUnitDao>().ToTable("MeasurementUnits", "public");
+            modelBuilder.Entity<CurrencyDao>().ToTable("Currencies", "public");
+            modelBuilder.Entity<ProductDao>().ToTable("Products", "public");
+            modelBuilder.Entity<ProfileProductPriceDao>().ToTable("ProfileProductPrices", "public");
+            modelBuilder.Entity<ProfileProductOverridePriceDao>().ToTable("ProfileProductOverridePrices", "public");
+            modelBuilder.Entity<CartItemDao>().ToTable("CartItems", "public");
+
+            #endregion
+
+            #region company
+
+            modelBuilder.Entity<MemberRoleDao>().ToTable("MemberRoles", "company");
 
             #endregion
 
@@ -367,6 +447,103 @@ namespace Renoza.Infrastructure.Contexts
 
             #endregion
 
+            #region CompanyMemberDao
+
+            modelBuilder.Entity<CompanyMemberDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyJoinRequestStatusDao
+
+            modelBuilder.Entity<CompanyJoinRequestStatusDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CompanyJoinRequestDao
+
+            modelBuilder.Entity<CompanyJoinRequestDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region FavoriteDao
+
+            modelBuilder.Entity<FavoriteDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region ProductCategoryDao
+
+            modelBuilder.Entity<ProductCategoryDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region MeasurementUnitTypeDao
+
+            modelBuilder.Entity<MeasurementUnitTypeDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region MeasurementUnitDao
+
+            modelBuilder.Entity<MeasurementUnitDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region CurrencyDao
+
+            modelBuilder.Entity<CurrencyDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region ProductDao
+
+            modelBuilder.Entity<ProductDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #region ProfileProductPriceDao
+
+            // Составной первичный ключ
+            modelBuilder.Entity<ProfileProductPriceDao>()
+                .HasKey(x => new { x.ProfileId, x.ProductId, x.StartDate });
+
+            #endregion
+
+            #region ProfileProductOverridePriceDao
+
+            // Составной первичный ключ
+            modelBuilder.Entity<ProfileProductOverridePriceDao>()
+                .HasKey(x => new { x.ProfileId, x.ProductId, x.StartDate, x.CurrencyId });
+
+            #endregion
+
+            #region CartItemDao
+
+            modelBuilder.Entity<CartItemDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
+            #endregion
+
+            #region company
+
+            #region MemberRoleDao
+
+            modelBuilder.Entity<MemberRoleDao>()
+                .HasKey(x => x.Id);
+
+            #endregion
+
             #endregion
 
             #endregion
@@ -458,12 +635,6 @@ namespace Renoza.Infrastructure.Contexts
                 .HasOne(x => x.User)
                 .WithMany(x => x.WorkerProfiles)
                 .HasForeignKey(x => x.UserId)
-                .IsRequired();
-
-            modelBuilder.Entity<WorkerProfileDao>()
-                .HasOne(x => x.CompanyProfile)
-                .WithMany(x => x.WorkerProfiles)
-                .HasForeignKey(x => x.CompanyProfileId)
                 .IsRequired();
 
             #endregion
@@ -585,10 +756,168 @@ namespace Renoza.Infrastructure.Contexts
                 .HasForeignKey(x => x.UserId)
                 .IsRequired();
 
-            modelBuilder.Entity<TechnicalSupervisorProfileDao>()
+            #endregion
+
+            #region CompanyMemberDao
+
+            modelBuilder.Entity<CompanyMemberDao>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyMemberDao>()
                 .HasOne(x => x.CompanyProfile)
-                .WithMany(x => x.TechnicalSupervisorProfiles)
+                .WithMany()
                 .HasForeignKey(x => x.CompanyProfileId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyMemberDao>()
+                .HasOne(x => x.MemberRole)
+                .WithMany(x => x.CompanyMembers)
+                .HasForeignKey(x => x.MemberRoleId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            #endregion
+
+            #region CompanyJoinRequestDao
+
+            modelBuilder.Entity<CompanyJoinRequestDao>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyJoinRequestDao>()
+                .HasOne(x => x.CompanyProfile)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyProfileId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyJoinRequestDao>()
+                .HasOne(x => x.Status)
+                .WithMany(x => x.CompanyJoinRequests)
+                .HasForeignKey(x => x.StatusId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            modelBuilder.Entity<CompanyJoinRequestDao>()
+                .HasOne(x => x.Reviewer)
+                .WithMany()
+                .HasForeignKey(x => x.ReviewerId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            #endregion
+
+            #region FavoriteDao
+
+            modelBuilder.Entity<FavoriteDao>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            #endregion
+
+            #region ProductCategoryDao
+
+            // Самореференция: родительская категория
+            modelBuilder.Entity<ProductCategoryDao>()
+                .HasOne(x => x.Parent)
+                .WithMany(x => x.Children)
+                .HasForeignKey(x => x.ParentId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            #endregion
+
+            #region MeasurementUnitDao
+
+            modelBuilder.Entity<MeasurementUnitDao>()
+                .HasOne(x => x.Type)
+                .WithMany(x => x.MeasurementUnits)
+                .HasForeignKey(x => x.TypeId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            #endregion
+
+            #region ProductDao
+
+            modelBuilder.Entity<ProductDao>()
+                .HasOne(x => x.Category)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            modelBuilder.Entity<ProductDao>()
+                .HasOne(x => x.MeasurementUnit)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.MeasurementUnitId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            #endregion
+
+            #region ProfileProductPriceDao
+
+            modelBuilder.Entity<ProfileProductPriceDao>()
+                .HasOne(x => x.Product)
+                .WithMany(x => x.ProfileProductPrices)
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<ProfileProductPriceDao>()
+                .HasOne(x => x.Currency)
+                .WithMany(x => x.ProfileProductPrices)
+                .HasForeignKey(x => x.CurrencyId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            #endregion
+
+            #region ProfileProductOverridePriceDao
+
+            // FK на базовую цену (составной ключ)
+            modelBuilder.Entity<ProfileProductOverridePriceDao>()
+                .HasOne(x => x.ProfileProductPrice)
+                .WithMany(x => x.OverridePrices)
+                .HasForeignKey(x => new { x.ProfileId, x.ProductId, x.StartDate })
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<ProfileProductOverridePriceDao>()
+                .HasOne(x => x.Currency)
+                .WithMany(x => x.ProfileProductOverridePrices)
+                .HasForeignKey(x => x.CurrencyId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            #endregion
+
+            #region CartItemDao
+
+            modelBuilder.Entity<CartItemDao>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<CartItemDao>()
+                .HasOne(x => x.Product)
+                .WithMany(x => x.CartItems)
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired();
 
             #endregion

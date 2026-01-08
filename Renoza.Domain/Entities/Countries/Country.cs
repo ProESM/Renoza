@@ -47,12 +47,5 @@ namespace Renoza.Domain.Entities.Countries
         [DataMember]
         [JsonProperty(PropertyName = "CreatedAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        /// <summary>
-        /// Дата и время редактирования
-        /// </summary>
-        [Display(Name = "Дата и время редактирования")]
-        [DataMember]
-        [JsonProperty(PropertyName = "UpdatedAt")]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

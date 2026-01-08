@@ -17,7 +17,9 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("DocumentTemplateTypes")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
@@ -34,7 +36,9 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = templateType.Id,
+                            Code = templateType.Code,
                             Name = templateType.Name,
+                            DisplayName = templateType.DisplayName,
                             IsActive = templateType.IsActive,
                             CreatedAt = now
                         });
@@ -47,7 +51,9 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("DocumentFormats")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("FileExtension").AsString(10).NotNullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
@@ -65,7 +71,9 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = format.Id,
+                            Code = format.Code,
                             Name = format.Name,
+                            DisplayName = format.DisplayName,
                             FileExtension = format.FileExtension,
                             IsActive = format.IsActive,
                             CreatedAt = now
@@ -79,7 +87,9 @@ namespace Renoza.DbMigration.Migration
                 Create.Table("DocumentStatuses")
                     .InSchema("public")
                     .WithColumn("Id").AsInt16().PrimaryKey()
+                    .WithColumn("Code").AsString(50).NotNullable().Unique()
                     .WithColumn("Name").AsString(256).NotNullable()
+                    .WithColumn("DisplayName").AsString(256).Nullable()
                     .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
                     .WithColumn("CreatedAt").AsCustom("timestamp with time zone").NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
@@ -96,7 +106,9 @@ namespace Renoza.DbMigration.Migration
                         .Row(new
                         {
                             Id = status.Id,
+                            Code = status.Code,
                             Name = status.Name,
+                            DisplayName = status.DisplayName,
                             IsActive = status.IsActive,
                             CreatedAt = now
                         });
