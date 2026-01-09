@@ -35,13 +35,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сервис работы с профилями заказчиков
         /// </summary>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="customerProfileRepository">Репозиторий профилей заказчиков</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public CustomerProfileService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CustomerProfileDao, Guid> customerProfileRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _customerProfileRepository = customerProfileRepository;
             _mapper = mapper;

@@ -14,30 +14,47 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class ReceiptService : IReceiptService
     {
-        /// <summary>
-        /// Шина сообщений
-        /// </summary>
-        private readonly IBus _bus;
-        /// <summary>
-        /// Логгер
-        /// </summary>
-        private readonly ILogger<ReceiptService> _logger;
-        /// <summary>
-        /// Настройки очередей
-        /// </summary>
-        private readonly QueueOptions _queueOptions;
+        #region Сервисы
+
         /// <summary>
         /// Сервис для проверки Rate Limiting
         /// </summary>
         private readonly IRateLimitService _rateLimitService;
+
         /// <summary>
         /// Сервис для работы с заданиями на обработку чеков
         /// </summary>
         private readonly ICashReceiptJobService _cashReceiptJobService;
+
         /// <summary>
         /// Сервис для работы с S3 хранилищем
         /// </summary>
         private readonly IS3StorageService _s3StorageService;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<ReceiptService> _logger;
+
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Шина сообщений
+        /// </summary>
+        private readonly IBus _bus;
+
+        /// <summary>
+        /// Настройки очередей
+        /// </summary>
+        private readonly QueueOptions _queueOptions;
+
+        #endregion
 
         /// <summary>
         /// Сервис для работы с чеками

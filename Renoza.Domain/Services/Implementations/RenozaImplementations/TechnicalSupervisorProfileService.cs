@@ -50,6 +50,28 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// </summary>
         private readonly ICompanyJoinRequestService _companyJoinRequestService;
 
+        #endregion
+
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования сущностей
+        /// </summary>
+        private readonly IMapper _mapper;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<TechnicalSupervisorProfileService> _logger;
+
+        #endregion
+
+        #region Настройки
+
         /// <summary>
         /// Шина сообщений MassTransit
         /// </summary>
@@ -62,24 +84,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
-        #region Мапперы
-
-        /// <summary>
-        /// Маппер для преобразования сущностей
-        /// </summary>
-        private readonly IMapper _mapper;
-
-        /// <summary>
-        /// Логгер
-        /// </summary>
-        private readonly ILogger<TechnicalSupervisorProfileService> _logger;
-
-        #endregion
-
         /// <summary>
         /// Сервис работы с профилями технического надзора
         /// </summary>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="technicalSupervisorProfileRepository">Репозиторий профилей технического надзора</param>
         /// <param name="companyProfileService">Сервис для работы с профилями компаний</param>
         /// <param name="companyVerificationJobService">Сервис для работы с заданиями на верификацию</param>
@@ -90,7 +98,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         /// <param name="logger">Логгер</param>
         public TechnicalSupervisorProfileService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<TechnicalSupervisorProfileDao, Guid> technicalSupervisorProfileRepository,
             ICompanyProfileService companyProfileService,
             ICompanyVerificationJobService companyVerificationJobService,
@@ -99,7 +107,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             IBus bus,
             QueueOptions queueOptions,
             IMapper mapper,
-            ILogger<TechnicalSupervisorProfileService> logger) : base(dbContext)
+            ILogger<TechnicalSupervisorProfileService> logger) : base(context)
         {
             _technicalSupervisorProfileRepository = technicalSupervisorProfileRepository;
             _companyProfileService = companyProfileService;

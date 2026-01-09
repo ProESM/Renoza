@@ -35,13 +35,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сервис работы с международными телефонными кодами
         /// </summary>
-        /// <param name="dbContext">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="phoneCountryCodeRepository">Репозиторий международных телефонных кодов</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public PhoneCountryCodeService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IReadOnlyEntityWithIdRepository<PhoneCountryCodeDao, int> phoneCountryCodeRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _phoneCountryCodeRepository = phoneCountryCodeRepository;
             _mapper = mapper;

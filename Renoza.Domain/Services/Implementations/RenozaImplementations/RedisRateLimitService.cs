@@ -12,11 +12,45 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class RedisRateLimitService : IRateLimitService
     {
-        private readonly IConnectionMultiplexer _redis;
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<RedisRateLimitService> _logger;
+
+        #endregion
+
+        #region Клиенты
+
+        /// <summary>
+        /// Мультиплексор подключений к Redis
+        /// </summary>
+        private readonly IConnectionMultiplexer _redis;
+
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Настройки Rate Limiting
+        /// </summary>
         private readonly RateLimitOptions _rateLimitOptions;
+
+        /// <summary>
+        /// Настройки Redis
+        /// </summary>
         private readonly RedisOptions _redisOptions;
 
+        #endregion
+
+        /// <summary>
+        /// Реализация Rate Limiting с использованием Redis и Sliding Window алгоритма
+        /// </summary>
+        /// <param name="redis">Мультиплексор подключений к Redis</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="rateLimitOptions">Настройки Rate Limiting</param>
+        /// <param name="redisOptions">Настройки Redis</param>
         public RedisRateLimitService(
             IConnectionMultiplexer redis,
             ILogger<RedisRateLimitService> logger,

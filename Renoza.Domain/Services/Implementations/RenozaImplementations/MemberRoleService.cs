@@ -14,8 +14,20 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class MemberRoleService : BaseService<RenozaContext>, IMemberRoleService
     {
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для работы с ролями участников компаний
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public MemberRoleService(RenozaContext context, IMapper mapper) : base(context)
         {
             _mapper = mapper;
@@ -24,6 +36,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Получить все роли
         /// </summary>
+        /// <param name="includeInactive">Включать неактивные роли</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        /// <returns>Список ролей</returns>
         public async Task<Result<List<MemberRole>>> GetAllAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
         {
             try
@@ -51,6 +66,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Получить роль по идентификатору
         /// </summary>
+        /// <param name="id">Идентификатор роли</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        /// <returns>Роль</returns>
         public async Task<Result<MemberRole>> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             try
@@ -75,6 +93,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Получить роль по коду
         /// </summary>
+        /// <param name="code">Код роли</param>
+        /// <param name="cancellationToken">Токен отмены</param>
+        /// <returns>Роль</returns>
         public async Task<Result<MemberRole>> GetByCodeAsync(string code, CancellationToken cancellationToken)
         {
             try

@@ -12,10 +12,39 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class OfdApiService : IOfdApiService
     {
-        private readonly HttpClient _httpClient;
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<OfdApiService> _logger;
+
+        #endregion
+
+        #region Клиенты
+
+        /// <summary>
+        /// HTTP клиент
+        /// </summary>
+        private readonly HttpClient _httpClient;
+
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Настройки брокера для работы с кассовыми чеками
+        /// </summary>
         private readonly CashReceiptBrokerOptions _cashReceiptBrokerOptions;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для работы с API OFD.ru
+        /// </summary>
+        /// <param name="httpClient">HTTP клиент</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="cashReceiptBrokerOptions">Настройки брокера для работы с кассовыми чеками</param>
         public OfdApiService(
             HttpClient httpClient,
             ILogger<OfdApiService> logger,

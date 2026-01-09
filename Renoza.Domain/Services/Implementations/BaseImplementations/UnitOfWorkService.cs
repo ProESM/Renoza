@@ -9,7 +9,7 @@ namespace Renoza.Domain.Services.Implementations.BaseImplementations
     public sealed class UnitOfWorkService : BaseService<RenozaContext>, IUnitOfWorkService
     {
         /// <summary>
-        /// Конструктор Unit of Work
+        /// Реализация Unit of Work для управления транзакциями
         /// </summary>
         /// <param name="context">Контекст БД</param>
         public UnitOfWorkService(RenozaContext context) : base(context)

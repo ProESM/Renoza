@@ -19,19 +19,6 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CashReceiptService : BaseService<RenozaContext>, ICashReceiptService
     {
-        /// <summary>
-        /// Логгер
-        /// </summary>
-        private readonly ILogger<CashReceiptService> _logger;
-        /// <summary>
-        /// Сервис для генерации PDF версии кассового чека
-        /// </summary>
-        private readonly ICashReceiptPdfService _cashReceiptPdfService;
-        /// <summary>
-        /// Сервис работы с S3 хранилищем
-        /// </summary>
-        private readonly IS3StorageService _s3StorageService;
-
         #region Репозитории
 
         /// <summary>
@@ -49,23 +36,45 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис для генерации PDF версии кассового чека
+        /// </summary>
+        private readonly ICashReceiptPdfService _cashReceiptPdfService;
+        /// <summary>
+        /// Сервис работы с S3 хранилищем
+        /// </summary>
+        private readonly IS3StorageService _s3StorageService;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<CashReceiptService> _logger;
+
+        #endregion
+
         /// <summary>
         /// Сервис для работы с кассовыми чеками
         /// </summary>
         /// <param name="logger">Логгер</param>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="cashReceiptPdfService">Сервис для генерации PDF версии кассового чека</param>
         /// <param name="s3StorageService">Сервис работы с S3 хранилищем</param>
         /// <param name="cashReceiptRepository">Репозиторий кассовых чеков</param>
         /// <param name="customerCashReceiptRepository">Репозиторий связей заказчиков и кассовых чеков</param>
         /// <param name="cashReceiptJobRepository">Репозиторий заданий на загрузку кассовых чеков</param>
         public CashReceiptService(ILogger<CashReceiptService> logger,
-            RenozaContext dbContext,
+            RenozaContext context,
             ICashReceiptPdfService cashReceiptPdfService,
             IS3StorageService s3StorageService,
             IEntityWithIdRepository<CashReceiptDao, Guid> cashReceiptRepository,
             IEntityRepository<CustomerCashReceiptDao> customerCashReceiptRepository,
-            IEntityWithIdRepository<CashReceiptJobDao, Guid> cashReceiptJobRepository) : base(dbContext)
+            IEntityWithIdRepository<CashReceiptJobDao, Guid> cashReceiptJobRepository) : base(context)
         {
             _logger = logger;
             _cashReceiptPdfService = cashReceiptPdfService;

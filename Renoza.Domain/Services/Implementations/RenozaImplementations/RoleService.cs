@@ -41,15 +41,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сервис работы с ролями
         /// </summary>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="roleRepository">Репозиторий ролей</param>
         /// <param name="userRoleRepository">Репозиторий связей пользователей и ролей</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public RoleService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<RoleDao, Guid> roleRepository,
             IEntityRepository<UserRoleDao> userRoleRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _roleRepository = roleRepository;
             _userRoleRepository = userRoleRepository;

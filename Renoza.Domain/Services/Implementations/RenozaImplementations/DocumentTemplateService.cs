@@ -17,20 +17,64 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class DocumentTemplateService : BaseService<RenozaContext>, IDocumentTemplateService
     {
-        private readonly ILogger<DocumentTemplateService> _logger;
-        private readonly IMapper _mapper;
-        private readonly IS3StorageService _s3StorageService;
-        private readonly IDocumentPlaceholderService _placeholderService;
+        #region Репозитории
+
+        /// <summary>
+        /// Репозиторий для работы с шаблонами документов
+        /// </summary>
         private readonly IEntityWithIdRepository<DocumentTemplateDao, Guid> _templateRepository;
 
+        #endregion
+
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис для работы с S3 хранилищем
+        /// </summary>
+        private readonly IS3StorageService _s3StorageService;
+
+        /// <summary>
+        /// Сервис для работы с плейсхолдерами документов
+        /// </summary>
+        private readonly IDocumentPlaceholderService _placeholderService;
+
+        #endregion
+
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
+        private readonly IMapper _mapper;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<DocumentTemplateService> _logger;
+
+        #endregion
+
+        /// <summary>
+        /// Сервис работы с шаблонами документов
+        /// </summary>
+        /// <param name="logger">Логгер</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="s3StorageService">Сервис для работы с S3 хранилищем</param>
+        /// <param name="placeholderService">Сервис для работы с плейсхолдерами документов</param>
+        /// <param name="templateRepository">Репозиторий для работы с шаблонами документов</param>
         public DocumentTemplateService(
             ILogger<DocumentTemplateService> logger,
             IMapper mapper,
-            RenozaContext dbContext,
+            RenozaContext context,
             IS3StorageService s3StorageService,
             IDocumentPlaceholderService placeholderService,
             IEntityWithIdRepository<DocumentTemplateDao, Guid> templateRepository)
-            : base(dbContext)
+            : base(context)
         {
             _logger = logger;
             _mapper = mapper;

@@ -15,26 +15,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class FavoriteService : BaseService<RenozaContext>, IFavoriteService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с избранным
         /// </summary>
         private readonly IEntityWithIdRepository<FavoriteDao, Guid> _favoriteRepository;
+
+        #endregion
+
+        #region Мапперы
 
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
-        /// Конструктор сервиса для работы с избранным
+        /// Сервис для управления избранным
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="favoriteRepository">Репозиторий для работы с избранным</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public FavoriteService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<FavoriteDao, Guid> favoriteRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _favoriteRepository = favoriteRepository;
             _mapper = mapper;

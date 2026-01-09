@@ -15,26 +15,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class MeasurementUnitService : BaseService<RenozaContext>, IMeasurementUnitService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с единицами измерения
         /// </summary>
         private readonly IEntityWithIdRepository<MeasurementUnitDao, Guid> _measurementUnitRepository;
+
+        #endregion
+
+        #region Мапперы
 
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
         /// Сервис для работы со справочником единиц измерения
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="measurementUnitRepository">Репозиторий для работы с единицами измерения</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public MeasurementUnitService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<MeasurementUnitDao, Guid> measurementUnitRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _measurementUnitRepository = measurementUnitRepository;
             _mapper = mapper;

@@ -13,13 +13,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class S3StorageService : BaseService<RenozaContext>, IS3StorageService
     {
+        #region Клиенты
+
+        /// <summary>
+        /// Клиент для работы с Amazon S3
+        /// </summary>
         private readonly IAmazonS3 _s3Client;
+
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Настройки S3 хранилища
+        /// </summary>
         private readonly S3Options _s3Options;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис работы с S3 хранилищем
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="s3Client">Клиент для работы с Amazon S3</param>
+        /// <param name="s3Options">Настройки S3 хранилища</param>
         public S3StorageService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IAmazonS3 s3Client,
-            IOptions<S3Options> s3Options) : base(dbContext)
+            IOptions<S3Options> s3Options) : base(context)
         {
             _s3Client = s3Client;
             _s3Options = s3Options.Value;

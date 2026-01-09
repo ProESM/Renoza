@@ -10,10 +10,14 @@ namespace Renoza.Domain.Services.Implementations.BaseImplementations
     public abstract class BaseService<T> : IBaseService<T>, IAsyncDisposable where T : BaseDbContext
     {
         protected readonly T Context;
+
+        /// <summary>
+        /// Транзакция БД
+        /// </summary>
         private IDbContextTransaction? _transaction;
 
         /// <summary>
-        /// Конструктор Unit of Work
+        /// Абстрактный базовый UnitOfWork-сервис
         /// </summary>
         /// <param name="context">Контекст БД</param>
         protected BaseService(T context)

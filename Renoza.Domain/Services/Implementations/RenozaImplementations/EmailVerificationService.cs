@@ -29,15 +29,6 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
-        #region Мапперы
-
-        /// <summary>
-        /// Маппер для преобразования сущностей
-        /// </summary>
-        private readonly IMapper _mapper;
-
-        #endregion
-
         #region Сервисы
 
         /// <summary>
@@ -47,20 +38,29 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования сущностей
+        /// </summary>
+        private readonly IMapper _mapper;
+
+        #endregion
+
         /// <summary>
         /// Сервис верификации электронной почты
         /// </summary>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="emailVerificationRepository">Репозиторий верификаций email</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         /// <param name="emailService">Сервис отправки email</param>
         public EmailVerificationService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<EmailVerificationDao, Guid> emailVerificationRepository,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
             IMapper mapper,
-            IEmailService emailService) : base(dbContext)
+            IEmailService emailService) : base(context)
         {
             _emailVerificationRepository = emailVerificationRepository;
             _userRepository = userRepository;
@@ -195,8 +195,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Генерирует 6-значный код верификации
+        /// Генерирует 6-значный код верификации для подтверждения электронной почты
         /// </summary>
+        /// <returns>Строка с 6-значным числовым кодом (от 100000 до 999999)</returns>
         private string GenerateVerificationCode()
         {
             var random = new Random();

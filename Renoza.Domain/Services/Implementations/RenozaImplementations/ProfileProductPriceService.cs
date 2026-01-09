@@ -15,6 +15,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class ProfileProductPriceService : BaseService<RenozaContext>, IProfileProductPriceService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с ценами
         /// </summary>
@@ -45,15 +47,21 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// </summary>
         private readonly IEntityWithIdRepository<CurrencyDao, Guid> _currencyRepository;
 
+        #endregion
+
+        #region Мапперы
+
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
         /// Сервис для управления ценами профилей на товары/услуги с проверкой прав
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="priceRepository">Репозиторий для работы с ценами</param>
         /// <param name="techSupervisorRepository">Репозиторий для работы с профилями TechnicalSupervisor</param>
         /// <param name="workerRepository">Репозиторий для работы с профилями Worker</param>
@@ -62,14 +70,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="currencyRepository">Репозиторий для работы с валютами</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public ProfileProductPriceService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityRepository<ProfileProductPriceDao> priceRepository,
             IEntityWithIdRepository<TechnicalSupervisorProfileDao, Guid> techSupervisorRepository,
             IEntityWithIdRepository<WorkerProfileDao, Guid> workerRepository,
             IEntityWithIdRepository<CompanyMemberDao, Guid> companyMemberRepository,
             IEntityWithIdRepository<ProductDao, Guid> productRepository,
             IEntityWithIdRepository<CurrencyDao, Guid> currencyRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _priceRepository = priceRepository;
             _techSupervisorRepository = techSupervisorRepository;

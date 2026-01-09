@@ -67,7 +67,7 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сервис работы с пользователями
         /// </summary>
-        /// <param name="dbContext">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
+        /// <param name="context">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
         /// <param name="passwordService">Сервис работы с паролями</param>
         /// <param name="customerProfileService">Сервис работы с профилями заказчиков</param>
@@ -76,14 +76,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="roleService">Сервис работы с ролями</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public UserService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
             IPasswordService passwordService,
             ICustomerProfileService customerProfileService,
             IWorkerProfileService workerProfileService,
             ITechnicalSupervisorProfileService technicalSupervisorProfileService,
             IRoleService roleService,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;

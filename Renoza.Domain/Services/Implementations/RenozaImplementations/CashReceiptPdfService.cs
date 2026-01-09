@@ -13,8 +13,19 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CashReceiptPdfService : ICashReceiptPdfService
     {
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<CashReceiptPdfService> _logger;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для генерации PDF версии кассового чека
+        /// </summary>
+        /// <param name="logger">Логгер</param>
         public CashReceiptPdfService(ILogger<CashReceiptPdfService> logger)
         {
             _logger = logger;
@@ -276,6 +287,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Форматирует сумму в копейках в рубли
         /// </summary>
+        /// <param name="amountInKopecks">Сумма в копейках (nullable)</param>
+        /// <returns>Строка с суммой в рублях с двумя знаками после запятой (например, "123.45")</returns>
         private string FormatCurrency(int? amountInKopecks)
         {
             if (!amountInKopecks.HasValue)
@@ -288,6 +301,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Форматирует сумму в копейках в рубли (decimal)
         /// </summary>
+        /// <param name="amountInKopecks">Сумма в копейках (nullable decimal)</param>
+        /// <returns>Строка с суммой в рублях с двумя знаками после запятой (например, "123.45")</returns>
         private string FormatCurrency(decimal? amountInKopecks)
         {
             if (!amountInKopecks.HasValue)
@@ -298,8 +313,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Форматирует количество
+        /// Форматирует количество товара для отображения в чеке
         /// </summary>
+        /// <param name="quantity">Количество товара (nullable)</param>
+        /// <returns>Строка с количеством товара (если null, возвращает "0")</returns>
         private string FormatQuantity(decimal? quantity)
         {
             if (!quantity.HasValue)
@@ -309,8 +326,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Генерирует QR-код из строки данных
+        /// Генерирует QR-код из строки данных для проверки чека на сайте ФНС
         /// </summary>
+        /// <param name="data">Строка с данными чека в формате ФНС (дата, сумма, ФН, номер документа и т.д.)</param>
+        /// <returns>Массив байтов PNG-изображения с QR-кодом</returns>
         private byte[] GenerateQrCode(string data)
         {
             using var qrGenerator = new QRCodeGenerator();

@@ -13,16 +13,30 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class JwtService : IJwtService
     {
+        #region Настройки
+
+        /// <summary>
+        /// Настройки JWT
+        /// </summary>
         private readonly JwtSettings _jwtSettings;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для работы с JWT токенами
+        /// </summary>
+        /// <param name="jwtSettings">Настройки JWT</param>
         public JwtService(JwtSettings jwtSettings)
         {
             _jwtSettings = jwtSettings;
         }
 
         /// <summary>
-        /// Генерация JWT токена для пользователя
+        /// Генерирует JWT токен для пользователя с указанной ролью
         /// </summary>
+        /// <param name="user">Пользователь, для которого генерируется токен</param>
+        /// <param name="roleId">Идентификатор роли пользователя</param>
+        /// <returns>Кортеж, содержащий сгенерированный JWT токен и дату его истечения</returns>
         public (string Token, DateTime ExpiresAt) GenerateToken(User user, Guid roleId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -55,8 +69,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Валидация JWT токена
+        /// Валидирует JWT токен и извлекает из него данные пользователя
         /// </summary>
+        /// <param name="token">JWT токен для валидации</param>
+        /// <returns>ClaimsPrincipal с данными пользователя, если токен валиден; null, если токен невалиден или истек</returns>
         public ClaimsPrincipal? ValidateToken(string token)
         {
             try
@@ -87,8 +103,10 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Получение ID пользователя из токена
+        /// Извлекает идентификатор пользователя из JWT токена
         /// </summary>
+        /// <param name="token">JWT токен</param>
+        /// <returns>Идентификатор пользователя, если токен валиден и содержит корректный ID; null в противном случае</returns>
         public int? GetUserIdFromToken(string token)
         {
             var principal = ValidateToken(token);

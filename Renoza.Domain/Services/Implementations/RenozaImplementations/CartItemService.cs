@@ -15,26 +15,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CartItemService : BaseService<RenozaContext>, ICartItemService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с элементами корзины покупок
         /// </summary>
         private readonly IEntityWithIdRepository<CartItemDao, Guid> _cartItemRepository;
-        
+
+        #endregion
+
+        #region Мапперы
+
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
         /// Сервис для управления элементами корзины покупок
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="cartItemRepository">Репозиторий для работы с элементами корзины покупок</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public CartItemService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CartItemDao, Guid> cartItemRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _cartItemRepository = cartItemRepository;
             _mapper = mapper;

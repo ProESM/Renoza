@@ -41,15 +41,15 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <summary>
         /// Сервис верификации телефонного номера
         /// </summary>
-        /// <param name="dbContext">Контекст БД</param>
+        /// <param name="context">Контекст БД</param>
         /// <param name="phoneVerificationRepository">Репозиторий верификаций телефона</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
         /// <param name="mapper">Маппер для преобразования сущностей</param>
         public PhoneVerificationService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<PhoneVerificationDao, Guid> phoneVerificationRepository,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _phoneVerificationRepository = phoneVerificationRepository;
             _userRepository = userRepository;
@@ -181,8 +181,9 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         }
 
         /// <summary>
-        /// Генерирует 6-значный код верификации
+        /// Генерирует 6-значный код верификации для подтверждения номера телефона
         /// </summary>
+        /// <returns>Строка с 6-значным числовым кодом (от 100000 до 999999)</returns>
         private string GenerateVerificationCode()
         {
             var random = new Random();

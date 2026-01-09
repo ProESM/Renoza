@@ -18,24 +18,78 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class DocumentService : BaseService<RenozaContext>, IDocumentService
     {
-        private readonly ILogger<DocumentService> _logger;
-        private readonly IMapper _mapper;
-        private readonly IS3StorageService _s3StorageService;
-        private readonly IDocumentPlaceholderService _placeholderService;
+        #region Репозитории
+
+        /// <summary>
+        /// Репозиторий для работы с шаблонами документов
+        /// </summary>
         private readonly IEntityWithIdRepository<DocumentTemplateDao, Guid> _templateRepository;
+
+        /// <summary>
+        /// Репозиторий для работы с документами
+        /// </summary>
         private readonly IEntityWithIdRepository<DocumentDao, Guid> _documentRepository;
+
+        /// <summary>
+        /// Репозиторий для работы с форматами документов
+        /// </summary>
         private readonly IReadOnlyEntityWithIdRepository<DocumentFormatDao, short> _formatRepository;
 
+        #endregion
+
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис для работы с S3 хранилищем
+        /// </summary>
+        private readonly IS3StorageService _s3StorageService;
+
+        /// <summary>
+        /// Сервис для работы с плейсхолдерами документов
+        /// </summary>
+        private readonly IDocumentPlaceholderService _placeholderService;
+
+        #endregion
+
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
+        private readonly IMapper _mapper;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<DocumentService> _logger;
+
+        #endregion
+
+        /// <summary>
+        /// Сервис работы с документами
+        /// </summary>
+        /// <param name="logger">Логгер</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="s3StorageService">Сервис для работы с S3 хранилищем</param>
+        /// <param name="placeholderService">Сервис для работы с плейсхолдерами документов</param>
+        /// <param name="templateRepository">Репозиторий для работы с шаблонами документов</param>
+        /// <param name="documentRepository">Репозиторий для работы с документами</param>
+        /// <param name="formatRepository">Репозиторий для работы с форматами документов</param>
         public DocumentService(
             ILogger<DocumentService> logger,
             IMapper mapper,
-            RenozaContext dbContext,
+            RenozaContext context,
             IS3StorageService s3StorageService,
             IDocumentPlaceholderService placeholderService,
             IEntityWithIdRepository<DocumentTemplateDao, Guid> templateRepository,
             IEntityWithIdRepository<DocumentDao, Guid> documentRepository,
             IReadOnlyEntityWithIdRepository<DocumentFormatDao, short> formatRepository)
-            : base(dbContext)
+            : base(context)
         {
             _logger = logger;
             _mapper = mapper;

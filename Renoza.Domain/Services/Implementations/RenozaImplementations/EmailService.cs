@@ -14,13 +14,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class EmailService : BaseService<RenozaContext>, IEmailService
     {
-        private readonly EmailOptions _emailOptions;
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<EmailService> _logger;
 
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Настройки для работы с email
+        /// </summary>
+        private readonly EmailOptions _emailOptions;
+
+        #endregion
+
+        /// <summary>
+        /// Сервис для отправки email
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="emailOptions">Настройки для работы с email</param>
+        /// <param name="logger">Логгер</param>
         public EmailService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IOptions<EmailOptions> emailOptions,
-            ILogger<EmailService> logger) : base(dbContext)
+            ILogger<EmailService> logger) : base(context)
         {
             _emailOptions = emailOptions.Value;
             _logger = logger;

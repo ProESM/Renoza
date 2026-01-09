@@ -11,7 +11,16 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class DocumentPlaceholderService : IDocumentPlaceholderService
     {
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<DocumentPlaceholderService> _logger;
+
+        #endregion
+
+        #region Приватные поля
 
         /// <summary>
         /// Regex для поиска плейсхолдеров в формате {{ключ}}
@@ -21,6 +30,12 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
+        #endregion
+
+        /// <summary>
+        /// Сервис работы с плейсхолдерами в документах
+        /// </summary>
+        /// <param name="logger">Логгер</param>
         public DocumentPlaceholderService(ILogger<DocumentPlaceholderService> logger)
         {
             _logger = logger;

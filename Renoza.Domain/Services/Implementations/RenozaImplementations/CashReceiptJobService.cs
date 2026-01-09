@@ -18,27 +18,71 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CashReceiptJobService : BaseService<RenozaContext>, ICashReceiptJobService
     {
-        private readonly ILogger<CashReceiptJobService> _logger;
-        private readonly IMapper _mapper;
-        private readonly IS3StorageService _s3StorageService;
-
         #region Репозитории
 
+        /// <summary>
+        /// Репозиторий для работы с чеками
+        /// </summary>
         private readonly IEntityWithIdRepository<CashReceiptDao, Guid> _cashReceiptRepository;
+
+        /// <summary>
+        /// Репозиторий для работы с заданиями на загрузку чеков
+        /// </summary>
         private readonly IEntityWithIdRepository<CashReceiptJobDao, Guid> _cashReceiptJobRepository;
+
+        /// <summary>
+        /// Репозиторий для работы с историей заданий на загрузку чеков
+        /// </summary>
         private readonly IEntityWithIdRepository<CashReceiptJobHistoryDao, long> _cashReceiptJobHistoryRepository;
 
         #endregion
 
+        #region Сервисы
+
+        /// <summary>
+        /// Сервис для работы с S3 хранилищем
+        /// </summary>
+        private readonly IS3StorageService _s3StorageService;
+
+        #endregion
+
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
+        private readonly IMapper _mapper;
+
+        #endregion
+
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private readonly ILogger<CashReceiptJobService> _logger;
+
+        #endregion
+
+        /// <summary>
+        /// Сервис для управления запросами на загрузку чеков (Job)
+        /// </summary>
+        /// <param name="logger">Логгер</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="cashReceiptRepository">Репозиторий для работы с чеками</param>
+        /// <param name="cashReceiptJobRepository">Репозиторий для работы с заданиями на загрузку чеков</param>
+        /// <param name="cashReceiptJobHistoryRepository">Репозиторий для работы с историей заданий на загрузку чеков</param>
+        /// <param name="s3StorageService">Сервис для работы с S3 хранилищем</param>
         public CashReceiptJobService(
             ILogger<CashReceiptJobService> logger,
             IMapper mapper,
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CashReceiptDao, Guid> cashReceiptRepository,
             IEntityWithIdRepository<CashReceiptJobDao, Guid> cashReceiptJobRepository,
             IEntityWithIdRepository<CashReceiptJobHistoryDao, long> cashReceiptJobHistoryRepository,
             IS3StorageService s3StorageService)
-            : base(dbContext)
+            : base(context)
         {
             _logger = logger;
             _mapper = mapper;

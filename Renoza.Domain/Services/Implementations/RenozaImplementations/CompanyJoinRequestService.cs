@@ -17,33 +17,45 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CompanyJoinRequestService : BaseService<RenozaContext>, ICompanyJoinRequestService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с запросами на вступление
         /// </summary>
         private readonly IEntityWithIdRepository<CompanyJoinRequestDao, Guid> _companyJoinRequestRepository;
+
+        #endregion
+
+        #region Сервисы
 
         /// <summary>
         /// Сервис для управления участниками компании
         /// </summary>
         private readonly ICompanyMemberService _companyMemberService;
 
+        #endregion
+
+        #region Мапперы
+
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
-        /// Конструктор сервиса для работы с запросами на вступление в компанию
+        /// Сервис для управления запросами на вступление в компанию
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="companyJoinRequestRepository">Репозиторий для работы с запросами на вступление</param>
         /// <param name="companyMemberService">Сервис для управления участниками компании</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public CompanyJoinRequestService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CompanyJoinRequestDao, Guid> companyJoinRequestRepository,
             ICompanyMemberService companyMemberService,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _companyJoinRequestRepository = companyJoinRequestRepository;
             _companyMemberService = companyMemberService;

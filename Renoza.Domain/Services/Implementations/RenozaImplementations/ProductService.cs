@@ -15,6 +15,8 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class ProductService : BaseService<RenozaContext>, IProductService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с товарами
         /// </summary>
@@ -40,15 +42,21 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// </summary>
         private readonly IEntityWithIdRepository<CartItemDao, Guid> _cartItemRepository;
 
+        #endregion
+
+        #region Мапперы
+
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
         /// Сервис для управления товарами и услугами
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="productRepository">Репозиторий для работы с товарами</param>
         /// <param name="categoryRepository">Репозиторий для работы с категориями</param>
         /// <param name="measurementUnitRepository">Репозиторий для работы с единицами измерения</param>
@@ -56,13 +64,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
         /// <param name="cartItemRepository">Репозиторий для работы с корзиной</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public ProductService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<ProductDao, Guid> productRepository,
             IEntityWithIdRepository<ProductCategoryDao, Guid> categoryRepository,
             IEntityWithIdRepository<MeasurementUnitDao, Guid> measurementUnitRepository,
             IEntityRepository<ProfileProductPriceDao> priceRepository,
             IEntityWithIdRepository<CartItemDao, Guid> cartItemRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;

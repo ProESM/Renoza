@@ -13,11 +13,6 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class PasswordService : BaseService<RenozaContext>, IPasswordService
     {
-        /// <summary>
-        /// Настройка политики паролей
-        /// </summary>
-        private readonly PasswordPolicyOptions _passwordPolicyOptions;
-
         #region Репозитории
 
         /// <summary>
@@ -35,20 +30,29 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
 
         #endregion
 
+        #region Настройки
+
+        /// <summary>
+        /// Настройка политики паролей
+        /// </summary>
+        private readonly PasswordPolicyOptions _passwordPolicyOptions;
+
+        #endregion
+
         /// <summary>
         /// Сервис работы с паролями пользователей
         /// </summary>
-        /// <param name="dbContext">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
+        /// <param name="context">Контекст БД (Scoped, новый экземпляр для каждого запроса)</param>
         /// <param name="passwordPolicyOptions">Настройка политики паролей</param>
         /// <param name="userRepository">Репозиторий для работы с пользователями</param>
         /// <param name="userPasswordRepository">Репозиторий для работы с паролями пользователей</param>
         /// <param name="userPasswordHistoryRepository">Репозиторий для работы с историей паролей пользователей</param>
         public PasswordService(
-            RenozaContext dbContext,
+            RenozaContext context,
             PasswordPolicyOptions passwordPolicyOptions,
             IEntityWithIdRepository<UserDao, Guid> userRepository,
             IEntityWithIdRepository<UserPasswordDao, long> userPasswordRepository,
-            IEntityWithIdRepository<UserPasswordHistoryDao, long> userPasswordHistoryRepository) : base(dbContext)
+            IEntityWithIdRepository<UserPasswordHistoryDao, long> userPasswordHistoryRepository) : base(context)
         {
             //_dbContext = dbContext;
             _passwordPolicyOptions = passwordPolicyOptions;
@@ -57,6 +61,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             _userPasswordHistoryRepository = userPasswordHistoryRepository;
         }
 
+        /// <summary>
+        /// Устанавливает новый пароль для пользователя
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="password">Новый пароль в открытом виде</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
+        /// <returns>true, если пароль успешно установлен; false, если пользователь не найден или пароль уже использовался ранее</returns>
         public async Task<bool> SetPasswordAsync(Guid userId, string password, CancellationToken cancellationToken = default)
         {
             // Проверяем, что пользователь существует
@@ -113,6 +124,14 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return await SaveChangesAsync(cancellationToken) > 0;
         }
 
+        /// <summary>
+        /// Изменяет пароль пользователя с проверкой текущего пароля
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="currentPassword">Текущий пароль для проверки</param>
+        /// <param name="newPassword">Новый пароль</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
+        /// <returns>true, если пароль успешно изменен; false, если текущий пароль неверный или новый пароль не соответствует требованиям</returns>
         public async Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
         {
             // Проверяем текущий пароль
@@ -125,6 +144,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return await SetPasswordAsync(userId, newPassword, cancellationToken);
         }
 
+        /// <summary>
+        /// Проверяет правильность пароля пользователя
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="password">Пароль для проверки</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
+        /// <returns>true, если пароль верный и не истек; false в противном случае</returns>
         public async Task<bool> ValidatePasswordAsync(Guid userId, string password, CancellationToken cancellationToken = default)
         {
             var activeUserPasswordDao = await _userPasswordRepository.GetQueryable()
@@ -142,6 +168,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return VerifyPassword(password, activeUserPasswordDao.PasswordHash, activeUserPasswordDao.PasswordSalt);
         }
 
+        /// <summary>
+        /// Проверяет, использовался ли пароль ранее в истории паролей пользователя
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="newPasswordHash">Хеш нового пароля для проверки</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
+        /// <returns>true, если пароль уже использовался ранее; false в противном случае</returns>
         public async Task<bool> IsPasswordInHistoryAsync(Guid userId, string newPasswordHash, CancellationToken cancellationToken = default)
         {
             var recentPasswords = await _userPasswordHistoryRepository.GetQueryable()
@@ -154,6 +187,12 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return recentPasswords.Contains(newPasswordHash);
         }
 
+        /// <summary>
+        /// Проверяет, истек ли срок действия пароля пользователя
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
+        /// <returns>true, если срок действия пароля истек; false в противном случае</returns>
         public async Task<bool> IsPasswordExpiredAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             var activeUserPasswordDao = await _userPasswordRepository.GetQueryable()
@@ -162,6 +201,11 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return activeUserPasswordDao?.ExpiredAt < DateTime.UtcNow;
         }
 
+        /// <summary>
+        /// Очищает историю паролей пользователя, удаляя самые старые записи, если их количество превышает заданный лимит
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="cancellationToken">Токен отмены операции</param>
         private async Task CleanupPasswordHistory(Guid userId, CancellationToken cancellationToken = default)
         {
             var historyCount = await _userPasswordHistoryRepository.GetQueryable()
@@ -179,6 +223,11 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             }
         }
 
+        /// <summary>
+        /// Генерирует хеш и соль для пароля с использованием алгоритма HMACSHA512
+        /// </summary>
+        /// <param name="password">Пароль в открытом виде</param>
+        /// <returns>Кортеж, содержащий хеш пароля и соль в формате Base64</returns>
         private (string hash, string salt) HashPassword(string password)
         {
             using var hmac = new System.Security.Cryptography.HMACSHA512();
@@ -187,6 +236,13 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
             return (hash, salt);
         }
 
+        /// <summary>
+        /// Проверяет соответствие пароля сохраненному хешу с использованием сохраненной соли
+        /// </summary>
+        /// <param name="password">Пароль для проверки в открытом виде</param>
+        /// <param name="storedHash">Сохраненный хеш пароля в формате Base64</param>
+        /// <param name="storedSalt">Сохраненная соль в формате Base64</param>
+        /// <returns>true, если пароль соответствует сохраненному хешу; false в противном случае</returns>
         private bool VerifyPassword(string password, string storedHash, string storedSalt)
         {
             var saltBytes = Convert.FromBase64String(storedSalt);

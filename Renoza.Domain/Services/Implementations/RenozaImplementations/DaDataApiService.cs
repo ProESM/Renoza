@@ -12,10 +12,39 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class DaDataApiService : IDaDataApiService
     {
-        private readonly HttpClient _httpClient;
+        #region Логгеры
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<DaDataApiService> _logger;
+
+        #endregion
+
+        #region Клиенты
+
+        /// <summary>
+        /// HTTP клиент
+        /// </summary>
+        private readonly HttpClient _httpClient;
+
+        #endregion
+
+        #region Настройки
+
+        /// <summary>
+        /// Настройки брокера для верификации компаний
+        /// </summary>
         private readonly CompanyVerificationBrokerOptions _companyVerificationBrokerOptions;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для работы с DaData API
+        /// </summary>
+        /// <param name="httpClient">HTTP клиент</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="companyVerificationBrokerOptions">Настройки брокера для верификации компаний</param>
         public DaDataApiService(
             HttpClient httpClient,
             ILogger<DaDataApiService> logger,

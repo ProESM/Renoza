@@ -15,26 +15,34 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CompanyMemberService : BaseService<RenozaContext>, ICompanyMemberService
     {
+        #region Репозитории
+
         /// <summary>
         /// Репозиторий для работы с участниками компаний
         /// </summary>
         private readonly IEntityWithIdRepository<CompanyMemberDao, Guid> _companyMemberRepository;
+
+        #endregion
+
+        #region Мапперы
 
         /// <summary>
         /// Маппер для преобразования между DAO и Domain сущностями
         /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
         /// <summary>
-        /// Конструктор сервиса для работы с участниками компании
+        /// Сервис для работы с участниками компании
         /// </summary>
-        /// <param name="dbContext">Контекст базы данных</param>
+        /// <param name="context">Контекст базы данных</param>
         /// <param name="companyMemberRepository">Репозиторий для работы с участниками компаний</param>
         /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public CompanyMemberService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CompanyMemberDao, Guid> companyMemberRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _companyMemberRepository = companyMemberRepository;
             _mapper = mapper;

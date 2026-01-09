@@ -15,15 +15,41 @@ namespace Renoza.Domain.Services.Implementations.RenozaImplementations
     /// </summary>
     public class CompanyVerificationJobService : BaseService<RenozaContext>, ICompanyVerificationJobService
     {
+        #region Репозитории
+
+        /// <summary>
+        /// Репозиторий для работы с заданиями на верификацию компаний
+        /// </summary>
         private readonly IEntityWithIdRepository<CompanyVerificationJobDao, Guid> _companyVerificationJobRepository;
+
+        /// <summary>
+        /// Репозиторий для работы с историей заданий на верификацию компаний
+        /// </summary>
         private readonly IEntityWithIdRepository<CompanyVerificationJobHistoryDao, long> _companyVerificationJobHistoryRepository;
+
+        #endregion
+
+        #region Мапперы
+
+        /// <summary>
+        /// Маппер для преобразования между DAO и Domain сущностями
+        /// </summary>
         private readonly IMapper _mapper;
 
+        #endregion
+
+        /// <summary>
+        /// Сервис для работы с заданиями на верификацию компаний
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="companyVerificationJobRepository">Репозиторий для работы с заданиями на верификацию компаний</param>
+        /// <param name="companyVerificationJobHistoryRepository">Репозиторий для работы с историей заданий на верификацию компаний</param>
+        /// <param name="mapper">Маппер для преобразования между DAO и Domain сущностями</param>
         public CompanyVerificationJobService(
-            RenozaContext dbContext,
+            RenozaContext context,
             IEntityWithIdRepository<CompanyVerificationJobDao, Guid> companyVerificationJobRepository,
             IEntityWithIdRepository<CompanyVerificationJobHistoryDao, long> companyVerificationJobHistoryRepository,
-            IMapper mapper) : base(dbContext)
+            IMapper mapper) : base(context)
         {
             _companyVerificationJobRepository = companyVerificationJobRepository;
             _companyVerificationJobHistoryRepository = companyVerificationJobHistoryRepository;
